@@ -6,6 +6,12 @@ html, body {
   background-color: #fcfcfc;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 h2 {
   color: #333;
   margin: 15px 20px 0 20px;
@@ -31,12 +37,15 @@ h2 {
 }
 
 #container {
+  flex: 1;
+  min-height: 0;
   width: calc(100% - 40px);
-  height: calc(100vh - 140px);
-  margin: 0 20px 20px 20px;
+  height: calc(100% - 10px);
+  
+  margin: 0 20px 20px;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background-color: white;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
