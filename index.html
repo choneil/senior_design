@@ -76,7 +76,7 @@
 
     const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     function fmtDate(ts) { const d = new Date(ts); return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate(); }
-    function fmtRange(s, e) { return s === e ? fmtDate(s) : fmtDate(s) + " — " + fmtDate(e); }
+    function fmtRange(s, e) { return s === e ? fmtDate(s) : fmtDate(s) + " \u2014 " + fmtDate(e); }
     function daysCount(s, e) { return Math.max(1, Math.round((e - s) / DAY)); }
 
     function GanttChart() {
@@ -86,34 +86,43 @@
       const [tooltip, setTooltip] = useState(null);
       const [isDragging, setIsDragging] = useState(false);
       const [dragState, setDragState] = useState(null);
-      const chartRef = useRef(null);
       const navRef = useRef(null);
 
       const totalSpan = PROJECT_END - PROJECT_START;
       const toggle = (id) => setCollapsed((p) => {const n = {...p}; n[id] = !n[id]; return n;});
 
-      const toPercent = useCallback((ts) => {
+      var toPercent = useCallback(function(ts) {
         return ((ts - viewStart) / (viewEnd - viewStart)) * 100;
       }, [viewStart, viewEnd]);
 
-      const navToPercent = (ts) => ((ts - PROJECT_START) / totalSpan) * 100;
+      var navToPercent = function(ts) { return ((ts - PROJECT_START) / totalSpan) * 100; };
 
-      const rows = useMemo(() => {
-        const r = [];
-        CATEGORIES.forEach((cat) => {
+      // Clamp bar to visible [0, 100] range
+      var barGeo = useCallback(function(s, e) {
+        var rawL = toPercent(s);
+        var rawR = toPercent(e);
+        if (rawR < 0 || rawL > 100) return null;
+        var l = Math.max(0, rawL);
+        var r = Math.min(100, rawR);
+        return { left: l, width: Math.max(0.3, r - l) };
+      }, [toPercent]);
+
+      var rows = useMemo(function() {
+        var r = [];
+        CATEGORIES.forEach(function(cat) {
           r.push({ type: "header", cat: cat });
           if (!collapsed[cat.id]) {
-            cat.tasks.forEach((t) => r.push({ type: "task", task: t, cat: cat }));
+            cat.tasks.forEach(function(t) { r.push({ type: "task", task: t, cat: cat }); });
           }
         });
         return r;
       }, [collapsed]);
 
-      const monthLines = useMemo(() => {
-        const lines = [];
-        let d = new Date(Date.UTC(2026, 3, 1));
+      var monthLines = useMemo(function() {
+        var lines = [];
+        var d = new Date(Date.UTC(2026, 3, 1));
         while (d.getTime() <= PROJECT_END + DAY * 31) {
-          const ts = d.getTime();
+          var ts = d.getTime();
           if (ts >= viewStart - DAY * 5 && ts <= viewEnd + DAY * 5) {
             lines.push({ ts: ts, label: MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear() });
           }
@@ -122,184 +131,184 @@
         return lines;
       }, [viewStart, viewEnd]);
 
-      const now = Date.now();
-      const todayPct = toPercent(now);
-      const showToday = now >= viewStart && now <= viewEnd;
+      var now = Date.now();
+      var todayPct = toPercent(now);
+      var showToday = now >= viewStart && now <= viewEnd;
 
-      const handleNavMouseDown = (e) => {
-        const rect = navRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const pct = x / rect.width;
-        const clickTs = PROJECT_START + pct * totalSpan;
-        const winStartPx = (navToPercent(viewStart) / 100) * rect.width;
-        const winEndPx = (navToPercent(viewEnd) / 100) * rect.width;
+      var handleNavMouseDown = function(e) {
+        var rect = navRef.current.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var pct = x / rect.width;
+        var clickTs = PROJECT_START + pct * totalSpan;
+        var winStartPx = (navToPercent(viewStart) / 100) * rect.width;
+        var winEndPx = (navToPercent(viewEnd) / 100) * rect.width;
         if (x >= winStartPx && x <= winEndPx) {
           setIsDragging(true);
           setDragState({ type: "pan", offsetTs: clickTs - viewStart });
         } else {
-          const span = viewEnd - viewStart;
-          let newStart = Math.max(PROJECT_START, Math.min(clickTs - span / 2, PROJECT_END - span));
+          var span = viewEnd - viewStart;
+          var newStart = Math.max(PROJECT_START, Math.min(clickTs - span / 2, PROJECT_END - span));
           setViewStart(newStart);
           setViewEnd(newStart + span);
         }
       };
 
-      useEffect(() => {
+      useEffect(function() {
         if (!isDragging) return;
-        const onMove = (e) => {
-          const rect = navRef.current.getBoundingClientRect();
-          const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-          const pct = x / rect.width;
-          const ts = PROJECT_START + pct * totalSpan;
-          const span = viewEnd - viewStart;
+        var onMove = function(e) {
+          var rect = navRef.current.getBoundingClientRect();
+          var x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+          var pct = x / rect.width;
+          var ts = PROJECT_START + pct * totalSpan;
+          var span = viewEnd - viewStart;
           if (dragState && dragState.type === "pan") {
-            let newStart = ts - dragState.offsetTs;
+            var newStart = ts - dragState.offsetTs;
             newStart = Math.max(PROJECT_START, Math.min(newStart, PROJECT_END - span));
             setViewStart(newStart);
             setViewEnd(newStart + span);
           }
         };
-        const onUp = () => { setIsDragging(false); setDragState(null); };
+        var onUp = function() { setIsDragging(false); setDragState(null); };
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup", onUp);
-        return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+        return function() { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
       }, [isDragging, dragState, viewEnd, viewStart, totalSpan]);
 
-      const zoomTo = (days) => {
-        const span = days * DAY;
-        const mid = (viewStart + viewEnd) / 2;
-        let s = mid - span / 2;
-        let e = mid + span / 2;
+      var zoomTo = function(days) {
+        var span = days * DAY;
+        var mid = (viewStart + viewEnd) / 2;
+        var s = mid - span / 2;
+        var e = mid + span / 2;
         if (s < PROJECT_START) { s = PROJECT_START; e = s + span; }
         if (e > PROJECT_END) { e = PROJECT_END; s = e - span; }
         setViewStart(s); setViewEnd(e);
       };
 
-      const ROW_H = 36;
-      const HEADER_H = 40;
-      const LABEL_W = 220;
+      var ROW_H = 36;
+      var HEADER_H = 40;
+      var LABEL_W = 200;
 
-      const s = {
-        root: { fontFamily: "'IBM Plex Sans', 'SF Pro Text', -apple-system, sans-serif", background: "#0F1117", color: "#E0E0E6", minHeight: "100vh", padding: "24px" },
-        headerWrap: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20 },
-        h1: { margin: 0, fontSize: 22, fontWeight: 700, color: "#F5F5F7", letterSpacing: "-0.02em" },
-        sub: { margin: "4px 0 0", fontSize: 13, color: "#6B6F80" },
-        btnGroup: { display: "flex", gap: 6 },
-        btn: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer", transition: "all 0.15s" },
-        chart: { background: "#14161E", borderRadius: 10, border: "1px solid #1E2130", overflow: "hidden" },
-        colHeader: { display: "flex", borderBottom: "1px solid #1E2130" },
-        colLabel: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "10px 16px", fontSize: 11, fontWeight: 600, color: "#5A5E70", textTransform: "uppercase", letterSpacing: "0.06em" },
-        gridLine: (pct) => ({ position: "absolute", left: pct + "%", top: 0, bottom: 0, width: 1, background: "#1A1D28" }),
-        todayLine: (pct) => ({ position: "absolute", left: pct + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.5, zIndex: 2 }),
+      var renderGridLines = function() {
+        return monthLines.map(function(m, i) {
+          var pct = toPercent(m.ts);
+          if (pct < 0 || pct > 100) return null;
+          return React.createElement("div", { key: "g" + i, style: { position: "absolute", left: pct + "%", top: 0, bottom: 0, width: 1, background: "#1E2130" } });
+        });
       };
 
-      return React.createElement("div", { style: s.root },
+      var renderToday = function() {
+        if (!showToday) return null;
+        return React.createElement("div", { style: { position: "absolute", left: todayPct + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.5, zIndex: 2 } });
+      };
+
+      return React.createElement("div", { style: { fontFamily: "'IBM Plex Sans', 'SF Pro Text', -apple-system, sans-serif", background: "#0F1117", color: "#E0E0E6", minHeight: "100vh", padding: "24px" } },
+
         // Header
-        React.createElement("div", { style: s.headerWrap },
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20 } },
           React.createElement("div", null,
-            React.createElement("h1", { style: s.h1 }, "Project Schedule"),
-            React.createElement("p", { style: s.sub }, "Apr 6 — Nov 30, 2026")
+            React.createElement("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: "#F5F5F7", letterSpacing: "-0.02em" } }, "Project Schedule"),
+            React.createElement("p", { style: { margin: "4px 0 0", fontSize: 13, color: "#6B6F80" } }, "Apr 6 \u2014 Nov 30, 2026")
           ),
-          React.createElement("div", { style: s.btnGroup },
-            [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map((z) =>
-              React.createElement("button", {
+          React.createElement("div", { style: { display: "flex", gap: 6 } },
+            [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map(function(z) {
+              return React.createElement("button", {
                 key: z.label,
-                style: s.btn,
-                onClick: () => z.label === "All" ? (setViewStart(PROJECT_START), setViewEnd(PROJECT_END)) : zoomTo(z.days),
-                onMouseEnter: (e) => { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; },
-                onMouseLeave: (e) => { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; },
-              }, z.label)
-            )
+                style: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer" },
+                onClick: function() { z.label === "All" ? (setViewStart(PROJECT_START), setViewEnd(PROJECT_END)) : zoomTo(z.days); },
+                onMouseEnter: function(e) { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; },
+                onMouseLeave: function(e) { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; },
+              }, z.label);
+            })
           )
         ),
 
-        // Chart
-        React.createElement("div", { style: s.chart },
-          // Month header row
-          React.createElement("div", { style: s.colHeader },
-            React.createElement("div", { style: s.colLabel }, "Work Stream"),
-            React.createElement("div", { style: { flex: 1, position: "relative", height: 36 } },
-              monthLines.map((m, i) => {
-                const pct = toPercent(m.ts);
-                if (pct < -5 || pct > 105) return null;
+        // Chart container
+        React.createElement("div", { style: { background: "#14161E", borderRadius: 10, border: "1px solid #1E2130", overflow: "hidden" } },
+
+          // Month header
+          React.createElement("div", { style: { display: "flex", borderBottom: "1px solid #1E2130" } },
+            React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "10px 16px", fontSize: 11, fontWeight: 600, color: "#5A5E70", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Work Stream"),
+            React.createElement("div", { style: { flex: 1, position: "relative", height: 36, overflow: "hidden" } },
+              monthLines.map(function(m, i) {
+                var pct = toPercent(m.ts);
+                if (pct < -10 || pct > 105) return null;
                 return React.createElement("div", { key: i, style: { position: "absolute", left: pct + "%", top: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: 8, fontSize: 11, fontWeight: 500, color: "#5A5E70", whiteSpace: "nowrap" } }, m.label);
               })
             )
           ),
 
           // Rows
-          React.createElement("div", { ref: chartRef, style: { position: "relative", overflow: "hidden" } },
-            rows.map((row, ri) => {
+          React.createElement("div", { style: { position: "relative", overflow: "hidden" } },
+            rows.map(function(row, ri) {
               if (row.type === "header") {
-                const cat = row.cat;
-                const isCollapsed = collapsed[cat.id];
+                var cat = row.cat;
+                var isCollapsed = collapsed[cat.id];
                 return React.createElement("div", {
                   key: cat.id,
-                  onClick: () => toggle(cat.id),
-                  style: { display: "flex", height: HEADER_H, alignItems: "center", cursor: "pointer", borderBottom: "1px solid #1A1D28", background: "#181B25", transition: "background 0.15s" },
-                  onMouseEnter: (e) => { e.currentTarget.style.background = "#1C1F2B"; },
-                  onMouseLeave: (e) => { e.currentTarget.style.background = "#181B25"; },
+                  onClick: function() { toggle(cat.id); },
+                  style: { display: "flex", height: HEADER_H, alignItems: "center", cursor: "pointer", borderBottom: "1px solid #1A1D28", background: "#181B25" },
+                  onMouseEnter: function(e) { e.currentTarget.style.background = "#1C1F2B"; },
+                  onMouseLeave: function(e) { e.currentTarget.style.background = "#181B25"; },
                 },
                   React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "0 16px", display: "flex", alignItems: "center", gap: 10 } },
-                    React.createElement("span", { style: { fontSize: 10, color: "#5A5E70", transition: "transform 0.2s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", display: "inline-block" } }, "▼"),
+                    React.createElement("span", { style: { fontSize: 10, color: "#5A5E70", transition: "transform 0.2s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", display: "inline-block" } }, "\u25BC"),
                     React.createElement("span", { style: { width: 10, height: 10, borderRadius: 3, background: cat.color, flexShrink: 0 } }),
                     React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: "#D0D2DC" } }, cat.label),
                     React.createElement("span", { style: { fontSize: 11, color: "#5A5E70", marginLeft: "auto" } }, cat.owner)
                   ),
-                  React.createElement("div", { style: { flex: 1, position: "relative", height: "100%" } },
-                    isCollapsed && cat.tasks.length > 0 && (() => {
-                      const minS = Math.min.apply(null, cat.tasks.map((t) => t.start));
-                      const maxE = Math.max.apply(null, cat.tasks.map((t) => t.end));
-                      const l = toPercent(minS);
-                      const r = toPercent(maxE);
-                      return React.createElement("div", { style: { position: "absolute", top: "50%", transform: "translateY(-50%)", left: Math.max(0, l) + "%", width: Math.max(0.5, r - l) + "%", height: 6, borderRadius: 3, background: cat.color, opacity: 0.35 } });
+                  React.createElement("div", { style: { flex: 1, position: "relative", height: "100%", overflow: "hidden" } },
+                    (function() {
+                      if (!isCollapsed || cat.tasks.length === 0) return null;
+                      var minS = Math.min.apply(null, cat.tasks.map(function(t) { return t.start; }));
+                      var maxE = Math.max.apply(null, cat.tasks.map(function(t) { return t.end; }));
+                      var geo = barGeo(minS, maxE);
+                      if (!geo) return null;
+                      return React.createElement("div", { style: { position: "absolute", top: "50%", transform: "translateY(-50%)", left: geo.left + "%", width: geo.width + "%", height: 6, borderRadius: 3, background: cat.color, opacity: 0.35 } });
                     })(),
-                    monthLines.map((m, i) => {
-                      const pct = toPercent(m.ts);
-                      if (pct < 0 || pct > 100) return null;
-                      return React.createElement("div", { key: i, style: s.gridLine(pct) });
-                    })
+                    renderGridLines()
                   )
                 );
               }
 
-              const task = row.task;
-              const cat = row.cat;
-              const barL = toPercent(task.start);
-              const barR = toPercent(task.end);
-              const barW = Math.max(task.milestone ? 0 : 0.4, barR - barL);
-              const clampL = Math.max(-2, barL);
-              const visible = barR >= -2 && barL <= 102;
+              var task = row.task;
+              var cat = row.cat;
 
               return React.createElement("div", {
                 key: cat.id + "-" + ri,
-                style: { display: "flex", height: ROW_H, alignItems: "center", borderBottom: "1px solid #16181F", background: ri % 2 === 0 ? "#14161E" : "#15171F", transition: "background 0.1s" },
-                onMouseEnter: (e) => { e.currentTarget.style.background = "#191C26"; },
-                onMouseLeave: (e) => { e.currentTarget.style.background = ri % 2 === 0 ? "#14161E" : "#15171F"; },
+                style: { display: "flex", height: ROW_H, alignItems: "center", borderBottom: "1px solid #16181F", background: ri % 2 === 0 ? "#14161E" : "#15171F" },
+                onMouseEnter: function(e) { e.currentTarget.style.background = "#191C26"; },
+                onMouseLeave: function(e) { e.currentTarget.style.background = ri % 2 === 0 ? "#14161E" : "#15171F"; },
               },
                 React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "0 16px 0 42px", fontSize: 12, color: "#8A8EA0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, task.name),
-                React.createElement("div", { style: { flex: 1, position: "relative", height: "100%" } },
-                  monthLines.map((m, i) => {
-                    const pct = toPercent(m.ts);
+                React.createElement("div", { style: { flex: 1, position: "relative", height: "100%", overflow: "hidden" } },
+                  renderGridLines(),
+                  renderToday(),
+
+                  // Milestone
+                  (function() {
+                    if (!task.milestone) return null;
+                    var pct = toPercent(task.start);
                     if (pct < 0 || pct > 100) return null;
-                    return React.createElement("div", { key: i, style: s.gridLine(pct) });
-                  }),
-                  showToday && React.createElement("div", { style: s.todayLine(todayPct) }),
-                  visible && (
-                    task.milestone ?
-                      React.createElement("div", {
-                        style: { position: "absolute", left: barL + "%", top: "50%", transform: "translate(-50%, -50%) rotate(45deg)", width: 12, height: 12, background: cat.color, borderRadius: 2, zIndex: 3, cursor: "default", boxShadow: "0 0 8px " + cat.color + "66" },
-                        onMouseEnter: (e) => { const rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
-                        onMouseLeave: () => setTooltip(null),
-                      }) :
-                      React.createElement("div", {
-                        style: { position: "absolute", left: clampL + "%", width: barW + "%", top: "50%", transform: "translateY(-50%)", height: 20, borderRadius: 4, background: "linear-gradient(135deg, " + cat.color + ", " + cat.color + "CC)", zIndex: 3, cursor: "default", boxShadow: "0 1px 4px " + cat.color + "33", transition: "box-shadow 0.15s, height 0.15s" },
-                        onMouseEnter: (e) => { e.currentTarget.style.height = "24px"; e.currentTarget.style.boxShadow = "0 2px 10px " + cat.color + "55"; const rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
-                        onMouseLeave: (e) => { e.currentTarget.style.height = "20px"; e.currentTarget.style.boxShadow = "0 1px 4px " + cat.color + "33"; setTooltip(null); },
-                      },
-                        barW > 6 && React.createElement("span", { style: { position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,0.4)" } }, task.name)
-                      )
-                  )
+                    return React.createElement("div", {
+                      style: { position: "absolute", left: pct + "%", top: "50%", transform: "translate(-50%, -50%) rotate(45deg)", width: 12, height: 12, background: cat.color, borderRadius: 2, zIndex: 3, cursor: "default", boxShadow: "0 0 8px " + cat.color + "66" },
+                      onMouseEnter: function(e) { var rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
+                      onMouseLeave: function() { setTooltip(null); },
+                    });
+                  })(),
+
+                  // Bar
+                  (function() {
+                    if (task.milestone) return null;
+                    var geo = barGeo(task.start, task.end);
+                    if (!geo) return null;
+                    return React.createElement("div", {
+                      style: { position: "absolute", left: geo.left + "%", width: geo.width + "%", top: "50%", transform: "translateY(-50%)", height: 20, borderRadius: 4, background: "linear-gradient(135deg, " + cat.color + ", " + cat.color + "CC)", zIndex: 3, cursor: "default", boxShadow: "0 1px 4px " + cat.color + "33", transition: "box-shadow 0.15s, height 0.15s" },
+                      onMouseEnter: function(e) { e.currentTarget.style.height = "24px"; e.currentTarget.style.boxShadow = "0 2px 10px " + cat.color + "55"; var rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
+                      onMouseLeave: function(e) { e.currentTarget.style.height = "20px"; e.currentTarget.style.boxShadow = "0 1px 4px " + cat.color + "33"; setTooltip(null); },
+                    },
+                      geo.width > 5 ? React.createElement("span", { style: { position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,0.4)", overflow: "hidden", maxWidth: "calc(100% - 16px)", textOverflow: "ellipsis" } }, task.name) : null
+                    );
+                  })()
                 )
               );
             })
@@ -312,28 +321,28 @@
               onMouseDown: handleNavMouseDown,
               style: { position: "relative", height: 40, background: "#0F1117", borderRadius: 6, cursor: "pointer", overflow: "hidden", border: "1px solid #1E2130" },
             },
-              CATEGORIES.map((cat, ci) =>
-                cat.tasks.map((t, ti) => {
-                  const l = navToPercent(t.start);
-                  const w = Math.max(0.3, navToPercent(t.end) - l);
-                  const ySlot = (ci / CATEGORIES.length) * 28 + 4;
+              CATEGORIES.map(function(cat, ci) {
+                return cat.tasks.map(function(t, ti) {
+                  var l = navToPercent(t.start);
+                  var w = Math.max(0.3, navToPercent(t.end) - l);
+                  var ySlot = (ci / CATEGORIES.length) * 28 + 4;
                   return React.createElement("div", { key: cat.id + "-" + ti, style: { position: "absolute", left: l + "%", width: w + "%", top: ySlot, height: 4, borderRadius: 2, background: cat.color, opacity: 0.6 } });
-                })
-              ),
+                });
+              }),
               React.createElement("div", { style: { position: "absolute", left: navToPercent(viewStart) + "%", width: (navToPercent(viewEnd) - navToPercent(viewStart)) + "%", top: 0, bottom: 0, background: "rgba(255,255,255,0.06)", borderLeft: "2px solid #4A90D9", borderRight: "2px solid #4A90D9", borderRadius: 4 } }),
-              now >= PROJECT_START && now <= PROJECT_END && React.createElement("div", { style: { position: "absolute", left: navToPercent(now) + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.6 } })
+              now >= PROJECT_START && now <= PROJECT_END ? React.createElement("div", { style: { position: "absolute", left: navToPercent(now) + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.6 } }) : null
             )
           )
         ),
 
         // Legend
         React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" } },
-          CATEGORIES.map((cat) =>
-            React.createElement("div", { key: cat.id, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
+          CATEGORIES.map(function(cat) {
+            return React.createElement("div", { key: cat.id, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
               React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: cat.color } }),
               cat.label
-            )
-          ),
+            );
+          }),
           React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
             React.createElement("span", { style: { width: 8, height: 2, background: "#FF6B6B", borderRadius: 1 } }),
             "Today"
@@ -341,17 +350,15 @@
         ),
 
         // Tooltip
-        tooltip && React.createElement("div", {
+        tooltip ? React.createElement("div", {
           style: { position: "fixed", left: tooltip.x, top: tooltip.y, transform: "translate(-50%, -100%)", background: "#1E2130", border: "1px solid #2A2D3A", borderRadius: 8, padding: "10px 14px", zIndex: 999, pointerEvents: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.4)", minWidth: 160 },
         },
           React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color: "#F5F5F7", marginBottom: 4 } }, tooltip.task.name),
-          React.createElement("div", { style: { fontSize: 11, color: tooltip.cat.color, marginBottom: 2 } }, tooltip.cat.label + " · " + tooltip.cat.owner),
+          React.createElement("div", { style: { fontSize: 11, color: tooltip.cat.color, marginBottom: 2 } }, tooltip.cat.label + " \u00B7 " + tooltip.cat.owner),
           React.createElement("div", { style: { fontSize: 11, color: "#6B6F80" } },
-            fmtRange(tooltip.task.start, tooltip.task.end),
-            !tooltip.task.milestone && React.createElement("span", null, " · " + daysCount(tooltip.task.start, tooltip.task.end) + "d"),
-            tooltip.task.milestone && React.createElement("span", null, " · Milestone")
+            fmtRange(tooltip.task.start, tooltip.task.end) + (!tooltip.task.milestone ? " \u00B7 " + daysCount(tooltip.task.start, tooltip.task.end) + "d" : " \u00B7 Milestone")
           )
-        )
+        ) : null
       );
     }
 
