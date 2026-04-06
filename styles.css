@@ -10,6 +10,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow: hidden; /* Stops the whole page from double-scrolling */
 }
 
 h2 {
@@ -36,14 +37,21 @@ h2 {
   background-color: #005a83;
 }
 
-#container {
-  flex: 1; /* Automatically fills the remaining vertical space */
-  min-height: 400px; /* Safe fallback for extremely small screens */
-  width: calc(100% - 40px);
+/* THE WRAPPER HANDLES THE SCROLLING */
+#chart-wrapper {
+  flex: 1;
+  min-height: 0;
   margin: 0 20px 20px 20px;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background-color: white;
-  /* overflow-y has been removed. Highcharts will handle the scrollbar internally! */
+  overflow-y: auto; /* The magic native scrollbar */
+  overflow-x: hidden;
+}
+
+/* THE CHART IS FORCED TO BE HUGE SO IT NEVER SQUISHES */
+#container {
+  width: 100%;
+  height: 1200px; 
 }
