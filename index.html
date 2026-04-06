@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Schedule</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0F1117; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useRef, useEffect, useMemo, useCallback } = React;
+
+    const DAY = 86400000;
+    const PROJECT_START = Date.UTC(2026, 3, 6);
+    const PROJECT_END = Date.UTC(2026, 10, 30);
+
+    const CATEGORIES = [
+      {
+        id: "solder", label: "Solder Dispensing", owner: "Chuck", color: "#E8590C",
+        tasks: [
+          { name: "Contact suppliers", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 3, 12) },
+          { name: "Machining tolerances", start: Date.UTC(2026, 3, 13), end: Date.UTC(2026, 3, 19) },
+          { name: "Spec screw/motor", start: Date.UTC(2026, 3, 20), end: Date.UTC(2026, 3, 26) },
+          { name: "Source components", start: Date.UTC(2026, 3, 27), end: Date.UTC(2026, 4, 3) },
+          { name: "Draft prototype", start: Date.UTC(2026, 4, 11), end: Date.UTC(2026, 4, 17) },
+          { name: "Print prototype", start: Date.UTC(2026, 4, 18), end: Date.UTC(2026, 4, 24) },
+          { name: "Design mounting", start: Date.UTC(2026, 4, 25), end: Date.UTC(2026, 4, 31) },
+          { name: "Air pressure system", start: Date.UTC(2026, 5, 1), end: Date.UTC(2026, 5, 7) },
+          { name: "Pressure testing", start: Date.UTC(2026, 5, 8), end: Date.UTC(2026, 5, 21) },
+          { name: "Assemble mock-up", start: Date.UTC(2026, 5, 22), end: Date.UTC(2026, 5, 28) },
+          { name: "Test solder delivery", start: Date.UTC(2026, 5, 29), end: Date.UTC(2026, 6, 5) },
+          { name: "Prototype testing", start: Date.UTC(2026, 6, 6), end: Date.UTC(2026, 6, 26) },
+          { name: "Assemble auger valve", start: Date.UTC(2026, 7, 3), end: Date.UTC(2026, 7, 9) },
+          { name: "Optimize operation", start: Date.UTC(2026, 9, 5), end: Date.UTC(2026, 10, 29) },
+          { name: "Reliable Operation", start: Date.UTC(2026, 10, 30), end: Date.UTC(2026, 10, 30), milestone: true },
+        ],
+      },
+      {
+        id: "file", label: "File Handling", owner: "Andy", color: "#1971C2",
+        tasks: [
+          { name: "File Architecture", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { name: "Parser Implementation", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+        ],
+      },
+      {
+        id: "comp", label: "Component Dispensing", owner: "Amar", color: "#2F9E44",
+        tasks: [
+          { name: "Dispenser Design", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { name: "Feeder Assembly", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+        ],
+      },
+      {
+        id: "gantry", label: "Gantry System", owner: "Ainaan", color: "#9C36B5",
+        tasks: [
+          { name: "Mechanics & Rail", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { name: "Software Control", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+        ],
+      },
+      {
+        id: "psu", label: "Power Supply", owner: "Team", color: "#E67700",
+        tasks: [{ name: "Build & Test", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }],
+      },
+      {
+        id: "board", label: "Main PCB", owner: "Team", color: "#C92A2A",
+        tasks: [{ name: "Schematic & Fab", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }],
+      },
+    ];
+
+    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    function fmtDate(ts) { const d = new Date(ts); return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate(); }
+    function fmtRange(s, e) { return s === e ? fmtDate(s) : fmtDate(s) + " — " + fmtDate(e); }
+    function daysCount(s, e) { return Math.max(1, Math.round((e - s) / DAY)); }
+
+    function GanttChart() {
+      const [collapsed, setCollapsed] = useState({});
+      const [viewStart, setViewStart] = useState(PROJECT_START);
+      const [viewEnd, setViewEnd] = useState(PROJECT_END);
+      const [tooltip, setTooltip] = useState(null);
+      const [isDragging, setIsDragging] = useState(false);
+      const [dragState, setDragState] = useState(null);
+      const chartRef = useRef(null);
+      const navRef = useRef(null);
+
+      const totalSpan = PROJECT_END - PROJECT_START;
+      const toggle = (id) => setCollapsed((p) => {const n = {...p}; n[id] = !n[id]; return n;});
+
+      const toPercent = useCallback((ts) => {
+        return ((ts - viewStart) / (viewEnd - viewStart)) * 100;
+      }, [viewStart, viewEnd]);
+
+      const navToPercent = (ts) => ((ts - PROJECT_START) / totalSpan) * 100;
+
+      const rows = useMemo(() => {
+        const r = [];
+        CATEGORIES.forEach((cat) => {
+          r.push({ type: "header", cat: cat });
+          if (!collapsed[cat.id]) {
+            cat.tasks.forEach((t) => r.push({ type: "task", task: t, cat: cat }));
+          }
+        });
+        return r;
+      }, [collapsed]);
+
+      const monthLines = useMemo(() => {
+        const lines = [];
+        let d = new Date(Date.UTC(2026, 3, 1));
+        while (d.getTime() <= PROJECT_END + DAY * 31) {
+          const ts = d.getTime();
+          if (ts >= viewStart - DAY * 5 && ts <= viewEnd + DAY * 5) {
+            lines.push({ ts: ts, label: MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear() });
+          }
+          d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+        }
+        return lines;
+      }, [viewStart, viewEnd]);
+
+      const now = Date.now();
+      const todayPct = toPercent(now);
+      const showToday = now >= viewStart && now <= viewEnd;
+
+      const handleNavMouseDown = (e) => {
+        const rect = navRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const pct = x / rect.width;
+        const clickTs = PROJECT_START + pct * totalSpan;
+        const winStartPx = (navToPercent(viewStart) / 100) * rect.width;
+        const winEndPx = (navToPercent(viewEnd) / 100) * rect.width;
+        if (x >= winStartPx && x <= winEndPx) {
+          setIsDragging(true);
+          setDragState({ type: "pan", offsetTs: clickTs - viewStart });
+        } else {
+          const span = viewEnd - viewStart;
+          let newStart = Math.max(PROJECT_START, Math.min(clickTs - span / 2, PROJECT_END - span));
+          setViewStart(newStart);
+          setViewEnd(newStart + span);
+        }
+      };
+
+      useEffect(() => {
+        if (!isDragging) return;
+        const onMove = (e) => {
+          const rect = navRef.current.getBoundingClientRect();
+          const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+          const pct = x / rect.width;
+          const ts = PROJECT_START + pct * totalSpan;
+          const span = viewEnd - viewStart;
+          if (dragState && dragState.type === "pan") {
+            let newStart = ts - dragState.offsetTs;
+            newStart = Math.max(PROJECT_START, Math.min(newStart, PROJECT_END - span));
+            setViewStart(newStart);
+            setViewEnd(newStart + span);
+          }
+        };
+        const onUp = () => { setIsDragging(false); setDragState(null); };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+      }, [isDragging, dragState, viewEnd, viewStart, totalSpan]);
+
+      const zoomTo = (days) => {
+        const span = days * DAY;
+        const mid = (viewStart + viewEnd) / 2;
+        let s = mid - span / 2;
+        let e = mid + span / 2;
+        if (s < PROJECT_START) { s = PROJECT_START; e = s + span; }
+        if (e > PROJECT_END) { e = PROJECT_END; s = e - span; }
+        setViewStart(s); setViewEnd(e);
+      };
+
+      const ROW_H = 36;
+      const HEADER_H = 40;
+      const LABEL_W = 220;
+
+      const s = {
+        root: { fontFamily: "'IBM Plex Sans', 'SF Pro Text', -apple-system, sans-serif", background: "#0F1117", color: "#E0E0E6", minHeight: "100vh", padding: "24px" },
+        headerWrap: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20 },
+        h1: { margin: 0, fontSize: 22, fontWeight: 700, color: "#F5F5F7", letterSpacing: "-0.02em" },
+        sub: { margin: "4px 0 0", fontSize: 13, color: "#6B6F80" },
+        btnGroup: { display: "flex", gap: 6 },
+        btn: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer", transition: "all 0.15s" },
+        chart: { background: "#14161E", borderRadius: 10, border: "1px solid #1E2130", overflow: "hidden" },
+        colHeader: { display: "flex", borderBottom: "1px solid #1E2130" },
+        colLabel: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "10px 16px", fontSize: 11, fontWeight: 600, color: "#5A5E70", textTransform: "uppercase", letterSpacing: "0.06em" },
+        gridLine: (pct) => ({ position: "absolute", left: pct + "%", top: 0, bottom: 0, width: 1, background: "#1A1D28" }),
+        todayLine: (pct) => ({ position: "absolute", left: pct + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.5, zIndex: 2 }),
+      };
+
+      return React.createElement("div", { style: s.root },
+        // Header
+        React.createElement("div", { style: s.headerWrap },
+          React.createElement("div", null,
+            React.createElement("h1", { style: s.h1 }, "Project Schedule"),
+            React.createElement("p", { style: s.sub }, "Apr 6 — Nov 30, 2026")
+          ),
+          React.createElement("div", { style: s.btnGroup },
+            [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map((z) =>
+              React.createElement("button", {
+                key: z.label,
+                style: s.btn,
+                onClick: () => z.label === "All" ? (setViewStart(PROJECT_START), setViewEnd(PROJECT_END)) : zoomTo(z.days),
+                onMouseEnter: (e) => { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; },
+                onMouseLeave: (e) => { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; },
+              }, z.label)
+            )
+          )
+        ),
+
+        // Chart
+        React.createElement("div", { style: s.chart },
+          // Month header row
+          React.createElement("div", { style: s.colHeader },
+            React.createElement("div", { style: s.colLabel }, "Work Stream"),
+            React.createElement("div", { style: { flex: 1, position: "relative", height: 36 } },
+              monthLines.map((m, i) => {
+                const pct = toPercent(m.ts);
+                if (pct < -5 || pct > 105) return null;
+                return React.createElement("div", { key: i, style: { position: "absolute", left: pct + "%", top: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: 8, fontSize: 11, fontWeight: 500, color: "#5A5E70", whiteSpace: "nowrap" } }, m.label);
+              })
+            )
+          ),
+
+          // Rows
+          React.createElement("div", { ref: chartRef, style: { position: "relative", overflow: "hidden" } },
+            rows.map((row, ri) => {
+              if (row.type === "header") {
+                const cat = row.cat;
+                const isCollapsed = collapsed[cat.id];
+                return React.createElement("div", {
+                  key: cat.id,
+                  onClick: () => toggle(cat.id),
+                  style: { display: "flex", height: HEADER_H, alignItems: "center", cursor: "pointer", borderBottom: "1px solid #1A1D28", background: "#181B25", transition: "background 0.15s" },
+                  onMouseEnter: (e) => { e.currentTarget.style.background = "#1C1F2B"; },
+                  onMouseLeave: (e) => { e.currentTarget.style.background = "#181B25"; },
+                },
+                  React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "0 16px", display: "flex", alignItems: "center", gap: 10 } },
+                    React.createElement("span", { style: { fontSize: 10, color: "#5A5E70", transition: "transform 0.2s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", display: "inline-block" } }, "▼"),
+                    React.createElement("span", { style: { width: 10, height: 10, borderRadius: 3, background: cat.color, flexShrink: 0 } }),
+                    React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: "#D0D2DC" } }, cat.label),
+                    React.createElement("span", { style: { fontSize: 11, color: "#5A5E70", marginLeft: "auto" } }, cat.owner)
+                  ),
+                  React.createElement("div", { style: { flex: 1, position: "relative", height: "100%" } },
+                    isCollapsed && cat.tasks.length > 0 && (() => {
+                      const minS = Math.min.apply(null, cat.tasks.map((t) => t.start));
+                      const maxE = Math.max.apply(null, cat.tasks.map((t) => t.end));
+                      const l = toPercent(minS);
+                      const r = toPercent(maxE);
+                      return React.createElement("div", { style: { position: "absolute", top: "50%", transform: "translateY(-50%)", left: Math.max(0, l) + "%", width: Math.max(0.5, r - l) + "%", height: 6, borderRadius: 3, background: cat.color, opacity: 0.35 } });
+                    })(),
+                    monthLines.map((m, i) => {
+                      const pct = toPercent(m.ts);
+                      if (pct < 0 || pct > 100) return null;
+                      return React.createElement("div", { key: i, style: s.gridLine(pct) });
+                    })
+                  )
+                );
+              }
+
+              const task = row.task;
+              const cat = row.cat;
+              const barL = toPercent(task.start);
+              const barR = toPercent(task.end);
+              const barW = Math.max(task.milestone ? 0 : 0.4, barR - barL);
+              const clampL = Math.max(-2, barL);
+              const visible = barR >= -2 && barL <= 102;
+
+              return React.createElement("div", {
+                key: cat.id + "-" + ri,
+                style: { display: "flex", height: ROW_H, alignItems: "center", borderBottom: "1px solid #16181F", background: ri % 2 === 0 ? "#14161E" : "#15171F", transition: "background 0.1s" },
+                onMouseEnter: (e) => { e.currentTarget.style.background = "#191C26"; },
+                onMouseLeave: (e) => { e.currentTarget.style.background = ri % 2 === 0 ? "#14161E" : "#15171F"; },
+              },
+                React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "0 16px 0 42px", fontSize: 12, color: "#8A8EA0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, task.name),
+                React.createElement("div", { style: { flex: 1, position: "relative", height: "100%" } },
+                  monthLines.map((m, i) => {
+                    const pct = toPercent(m.ts);
+                    if (pct < 0 || pct > 100) return null;
+                    return React.createElement("div", { key: i, style: s.gridLine(pct) });
+                  }),
+                  showToday && React.createElement("div", { style: s.todayLine(todayPct) }),
+                  visible && (
+                    task.milestone ?
+                      React.createElement("div", {
+                        style: { position: "absolute", left: barL + "%", top: "50%", transform: "translate(-50%, -50%) rotate(45deg)", width: 12, height: 12, background: cat.color, borderRadius: 2, zIndex: 3, cursor: "default", boxShadow: "0 0 8px " + cat.color + "66" },
+                        onMouseEnter: (e) => { const rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
+                        onMouseLeave: () => setTooltip(null),
+                      }) :
+                      React.createElement("div", {
+                        style: { position: "absolute", left: clampL + "%", width: barW + "%", top: "50%", transform: "translateY(-50%)", height: 20, borderRadius: 4, background: "linear-gradient(135deg, " + cat.color + ", " + cat.color + "CC)", zIndex: 3, cursor: "default", boxShadow: "0 1px 4px " + cat.color + "33", transition: "box-shadow 0.15s, height 0.15s" },
+                        onMouseEnter: (e) => { e.currentTarget.style.height = "24px"; e.currentTarget.style.boxShadow = "0 2px 10px " + cat.color + "55"; const rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
+                        onMouseLeave: (e) => { e.currentTarget.style.height = "20px"; e.currentTarget.style.boxShadow = "0 1px 4px " + cat.color + "33"; setTooltip(null); },
+                      },
+                        barW > 6 && React.createElement("span", { style: { position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,0.4)" } }, task.name)
+                      )
+                  )
+                )
+              );
+            })
+          ),
+
+          // Navigator
+          React.createElement("div", { style: { borderTop: "1px solid #1E2130", padding: "12px 16px" } },
+            React.createElement("div", {
+              ref: navRef,
+              onMouseDown: handleNavMouseDown,
+              style: { position: "relative", height: 40, background: "#0F1117", borderRadius: 6, cursor: "pointer", overflow: "hidden", border: "1px solid #1E2130" },
+            },
+              CATEGORIES.map((cat, ci) =>
+                cat.tasks.map((t, ti) => {
+                  const l = navToPercent(t.start);
+                  const w = Math.max(0.3, navToPercent(t.end) - l);
+                  const ySlot = (ci / CATEGORIES.length) * 28 + 4;
+                  return React.createElement("div", { key: cat.id + "-" + ti, style: { position: "absolute", left: l + "%", width: w + "%", top: ySlot, height: 4, borderRadius: 2, background: cat.color, opacity: 0.6 } });
+                })
+              ),
+              React.createElement("div", { style: { position: "absolute", left: navToPercent(viewStart) + "%", width: (navToPercent(viewEnd) - navToPercent(viewStart)) + "%", top: 0, bottom: 0, background: "rgba(255,255,255,0.06)", borderLeft: "2px solid #4A90D9", borderRight: "2px solid #4A90D9", borderRadius: 4 } }),
+              now >= PROJECT_START && now <= PROJECT_END && React.createElement("div", { style: { position: "absolute", left: navToPercent(now) + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.6 } })
+            )
+          )
+        ),
+
+        // Legend
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" } },
+          CATEGORIES.map((cat) =>
+            React.createElement("div", { key: cat.id, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
+              React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: cat.color } }),
+              cat.label
+            )
+          ),
+          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
+            React.createElement("span", { style: { width: 8, height: 2, background: "#FF6B6B", borderRadius: 1 } }),
+            "Today"
+          )
+        ),
+
+        // Tooltip
+        tooltip && React.createElement("div", {
+          style: { position: "fixed", left: tooltip.x, top: tooltip.y, transform: "translate(-50%, -100%)", background: "#1E2130", border: "1px solid #2A2D3A", borderRadius: 8, padding: "10px 14px", zIndex: 999, pointerEvents: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.4)", minWidth: 160 },
+        },
+          React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color: "#F5F5F7", marginBottom: 4 } }, tooltip.task.name),
+          React.createElement("div", { style: { fontSize: 11, color: tooltip.cat.color, marginBottom: 2 } }, tooltip.cat.label + " · " + tooltip.cat.owner),
+          React.createElement("div", { style: { fontSize: 11, color: "#6B6F80" } },
+            fmtRange(tooltip.task.start, tooltip.task.end),
+            !tooltip.task.milestone && React.createElement("span", null, " · " + daysCount(tooltip.task.start, tooltip.task.end) + "d"),
+            tooltip.task.milestone && React.createElement("span", null, " · Milestone")
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(GanttChart));
+  </script>
+</body>
+</html>
