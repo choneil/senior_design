@@ -25,6 +25,7 @@
     }
     .controls button:hover { background-color: #005a83; }
 
+    /* Your original fixed container. Keeps everything safely on screen. */
     #container {
       width: 100%;
       height: 800px; 
@@ -68,26 +69,26 @@
             });
           },
           
-          // THE CORRECTED SNAP-BACK FIX: Safely handles collapsing folders!
-          redraw() {
+          // THE "SNAP-BACK" FAILSAFE: Fixes the crash when you close a folder!
+          render() {
             const yAxis = this.yAxis[0];
             const extremes = yAxis.getExtremes();
             if (!extremes) return;
 
-            const currentMin = Math.round(extremes.min);
             const dataMax = Math.round(extremes.dataMax);
-            const viewSize = 12; // Your max viewable rows
+            const currentMin = Math.round(extremes.min);
+            const viewSize = 12; // Maximum rows visible at one time
 
-            // Scenario 1: All folders closed. Camera must jump to row 0.
-            if (dataMax <= viewSize) {
-              if (currentMin > 0) {
-                setTimeout(() => yAxis.setExtremes(0, viewSize, true, false), 10);
-              }
+            // Scenario 1: You closed a folder and all remaining tasks fit on screen.
+            // Action: Snap the camera to the very top (Row 0).
+            if (dataMax <= viewSize && currentMin !== 0) {
+              setTimeout(() => yAxis.setExtremes(0, viewSize, true, false), 0);
             } 
-            // Scenario 2: Folder closed, but we are scrolled too far down. Snap to new bottom.
-            else if (currentMin + viewSize > dataMax) {
+            // Scenario 2: You closed a folder and your camera is staring at empty space.
+            // Action: Snap the camera exactly to the new bottom of the list.
+            else if (dataMax > viewSize && currentMin + viewSize > dataMax) {
               const newMin = dataMax - viewSize;
-              setTimeout(() => yAxis.setExtremes(newMin, dataMax, true, false), 10);
+              setTimeout(() => yAxis.setExtremes(newMin, dataMax, true, false), 0);
             }
           }
         }
@@ -101,7 +102,9 @@
         max: projectEnd
       },
 
+      // Restricts the view to 12 rows at a time so row heights are consistent
       yAxis: {
+        min: 0,
         max: 12, 
         scrollbar: { 
           enabled: true, 
@@ -109,6 +112,7 @@
         }
       },
 
+      // The sliding timeline window, beautifully pinned to the bottom
       navigator: {
         enabled: true,
         series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
@@ -167,7 +171,7 @@
       }]
     });
 
-    // MOUSE WHEEL SCRIPT
+    // THE MOUSE WHEEL SCRIPT: Smooth scrolling that cannot crash
     document.getElementById('container').addEventListener('wheel', function(e) {
       const chart = Highcharts.charts[0];
       if (!chart || !chart.yAxis || !chart.yAxis[0]) return;
@@ -177,9 +181,10 @@
       if (!extremes) return;
 
       const dataMax = Math.round(extremes.dataMax);
-      const dataMin = Math.max(0, Math.round(extremes.dataMin));
+      const dataMin = Math.max(0, Math.round(extremes.dataMin || 0));
       const viewSize = 12;
 
+      // Ignore scroll wheel if all rows fit perfectly on the screen
       if (dataMax - dataMin <= viewSize) return;
 
       e.preventDefault(); 
@@ -187,14 +192,17 @@
       const step = e.deltaY > 0 ? 1 : -1; 
       let newMin = Math.round(extremes.min) + step;
 
+      // Stop scrolling at the bottom boundary
       if (newMin + viewSize > dataMax) {
         newMin = dataMax - viewSize;
       }
 
+      // Stop scrolling at the top boundary
       if (newMin < dataMin) {
         newMin = dataMin;
       }
 
+      // Apply the scroll smoothly without refreshing the whole page
       if (newMin !== Math.round(extremes.min)) {
         yAxis.setExtremes(newMin, newMin + viewSize, true, false);
       }
