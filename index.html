@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Architecture Gantt Chart</title>
   
-  <script src="https://unpkg.com/highcharts@11.4.3/highcharts-gantt.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.3/highcharts-gantt.js"></script>
   
   <style>
     body {
@@ -13,7 +13,6 @@
       padding: 20px;
       font-family: Arial, sans-serif;
       background-color: #fcfcfc;
-      overflow-x: hidden; /* Stops horizontal jumping */
     }
 
     h2 { color: #333; margin-top: 0; }
@@ -26,7 +25,7 @@
     }
     .controls button:hover { background-color: #005a83; }
 
-    /* The Container: Fixed height keeps the Navigator on screen */
+    /* The Container: Fixed size, zero scaling issues */
     #container {
       width: 100%;
       height: 800px; 
@@ -56,20 +55,7 @@
 
     const chart = Highcharts.ganttChart('container', {
       chart: {
-        events: {
-          load() {
-            const xAxis = this.xAxis[0];
-            document.getElementById('btn-month').addEventListener('click', () => {
-              xAxis.setExtremes(projectStart, projectStart + (day * 30));
-            });
-            document.getElementById('btn-quarter').addEventListener('click', () => {
-              xAxis.setExtremes(projectStart, projectStart + (day * 90));
-            });
-            document.getElementById('btn-all').addEventListener('click', () => {
-              xAxis.setExtremes(projectStart, projectEnd);
-            });
-          }
-        }
+        height: 800 // Hard lock the box height
       },
 
       title: { text: null },
@@ -77,95 +63,98 @@
       xAxis: {
         currentDateIndicator: true,
         min: projectStart,
-        max: projectEnd
+        max: projectEnd,
+        grid: { borderWeight: 0 }
       },
 
       yAxis: {
-        // This keeps 15 rows on screen. Opening Solder won't squish the rest!
-        min: 0,
-        max: 15, 
+        // THE MAGIC FIX: Every row is exactly 45px. 
+        // Closing a category will NOT stretch the bars.
+        staticScale: 45, 
+        uniqueNames: true,
+        grid: { borderWeight: 0 },
         labels: {
           style: {
             width: '250px',
             textOverflow: 'ellipsis'
           }
-        },
-        scrollbar: { 
-          enabled: true,
-          showFull: false 
         }
       },
 
-      // The cool timeline scaler at the bottom
+      // Pinned Timeline Scaler at the bottom
       navigator: {
         enabled: true,
         liveRedraw: true,
+        height: 50,
         series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
       },
 
-      scrollbar: { enabled: true }, // Main horizontal scrollbar
+      // Horizontal scrollbar (if needed)
+      scrollbar: { enabled: true },
+
+      // Ensure events are hooked up
+      plotOptions: {
+        series: {
+          dataLabels: { enabled: true, format: '{point.name}', style: { fontWeight: 'normal', textOutline: 'none' } }
+        }
+      },
 
       series: [{
         name: 'Project Timeline',
         data: [
           // CATEGORY 1: SOLDER
-          { id: 'solder_root', name: 'Solder Dispensing (Chuck)' },
-          { parent: 'solder_root', name: 'Contact suppliers', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 3, 12) },
-          { parent: 'solder_root', name: 'Machining tolerances', start: Date.UTC(2026, 3, 13), end: Date.UTC(2026, 3, 19) },
-          { parent: 'solder_root', name: 'Spec screw/motor', start: Date.UTC(2026, 3, 20), end: Date.UTC(2026, 3, 26) },
-          { parent: 'solder_root', name: 'Source components', start: Date.UTC(2026, 3, 27), end: Date.UTC(2026, 4, 3) },
-          { parent: 'solder_root', name: 'Draft prototype', start: Date.UTC(2026, 4, 11), end: Date.UTC(2026, 4, 17) },
-          { parent: 'solder_root', name: 'Print prototype', start: Date.UTC(2026, 4, 18), end: Date.UTC(2026, 4, 24) },
-          { parent: 'solder_root', name: 'Design mounting', start: Date.UTC(2026, 4, 25), end: Date.UTC(2026, 4, 31) },
-          { parent: 'solder_root', name: 'Air pressure system', start: Date.UTC(2026, 5, 1), end: Date.UTC(2026, 5, 7) },
-          { parent: 'solder_root', name: 'Pressure testing', start: Date.UTC(2026, 5, 8), end: Date.UTC(2026, 5, 21) },
-          { parent: 'solder_root', name: 'Assemble mock-up', start: Date.UTC(2026, 5, 22), end: Date.UTC(2026, 5, 28) },
-          { parent: 'solder_root', name: 'Test solder delivery', start: Date.UTC(2026, 5, 29), end: Date.UTC(2026, 6, 5) },
-          { parent: 'solder_root', name: 'Prototype testing', start: Date.UTC(2026, 6, 6), end: Date.UTC(2026, 6, 26) },
-          { parent: 'solder_root', name: 'Final Assembly Prep', start: Date.UTC(2026, 6, 27), end: Date.UTC(2026, 7, 2) },
-          { parent: 'solder_root', name: 'Assemble auger valve', start: Date.UTC(2026, 7, 3), end: Date.UTC(2026, 7, 9) },
-          { parent: 'solder_root', name: 'Optimize operation', start: Date.UTC(2026, 9, 5), end: Date.UTC(2026, 10, 29) },
-          { parent: 'solder_root', name: 'Reliable Operation', start: Date.UTC(2026, 10, 30), end: Date.UTC(2026, 10, 30), milestone: true },
+          { id: 'solder', name: 'Solder Dispensing (Chuck)' },
+          { parent: 'solder', name: 'Contact suppliers', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 3, 12) },
+          { parent: 'solder', name: 'Machining tolerances', start: Date.UTC(2026, 3, 13), end: Date.UTC(2026, 3, 19) },
+          { parent: 'solder', name: 'Spec screw/motor', start: Date.UTC(2026, 3, 20), end: Date.UTC(2026, 3, 26) },
+          { parent: 'solder', name: 'Source components', start: Date.UTC(2026, 3, 27), end: Date.UTC(2026, 4, 3) },
+          { parent: 'solder', name: 'Draft prototype', start: Date.UTC(2026, 4, 11), end: Date.UTC(2026, 4, 17) },
+          { parent: 'solder', name: 'Print prototype', start: Date.UTC(2026, 4, 18), end: Date.UTC(2026, 4, 24) },
+          { parent: 'solder', name: 'Design mounting', start: Date.UTC(2026, 4, 25), end: Date.UTC(2026, 4, 31) },
+          { parent: 'solder', name: 'Air pressure system', start: Date.UTC(2026, 5, 1), end: Date.UTC(2026, 5, 7) },
+          { parent: 'solder', name: 'Pressure testing', start: Date.UTC(2026, 5, 8), end: Date.UTC(2026, 5, 21) },
+          { parent: 'solder', name: 'Assemble mock-up', start: Date.UTC(2026, 5, 22), end: Date.UTC(2026, 5, 28) },
+          { parent: 'solder', name: 'Test solder delivery', start: Date.UTC(2026, 5, 29), end: Date.UTC(2026, 6, 5) },
+          { parent: 'solder', name: 'Prototype testing', start: Date.UTC(2026, 6, 6), end: Date.UTC(2026, 6, 26) },
+          { parent: 'solder', name: 'Assemble auger valve', start: Date.UTC(2026, 7, 3), end: Date.UTC(2026, 7, 9) },
+          { parent: 'solder', name: 'Optimize operation', start: Date.UTC(2026, 9, 5), end: Date.UTC(2026, 10, 29) },
+          { parent: 'solder', name: 'Reliable Operation', start: Date.UTC(2026, 10, 30), end: Date.UTC(2026, 10, 30), milestone: true },
 
-          // CATEGORY 2: FILE HANDLING (Independent ID)
-          { id: 'file_root', name: 'File Handling (Andy)' },
-          { parent: 'file_root', name: 'Architecture Design', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { parent: 'file_root', name: 'Parser Implementation', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+          // CATEGORY 2: FILE HANDLING
+          { id: 'file', name: 'File Handling (Andy)' },
+          { parent: 'file', name: 'File Architecture', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { parent: 'file', name: 'Parser Implementation', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
 
           // CATEGORY 3: COMPONENT DISPENSING
-          { id: 'comp_root', name: 'Component Dispensing (Amar)' },
-          { parent: 'comp_root', name: 'Dispenser Prototyping', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { parent: 'comp_root', name: 'Feeder Integration', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+          { id: 'comp', name: 'Component Dispensing (Amar)' },
+          { parent: 'comp', name: 'Dispenser Design', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { parent: 'comp', name: 'Feeder Assembly', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
 
           // CATEGORY 4: GANTRY
-          { id: 'gantry_root', name: 'Gantry System (Ainaan)' },
-          { parent: 'gantry_root', name: 'Rail Installation', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { parent: 'gantry_root', name: 'Software Control', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
+          { id: 'gantry', name: 'Gantry System (Ainaan)' },
+          { parent: 'gantry', name: 'Mechanics & Rail', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
+          { parent: 'gantry', name: 'Software Control', start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
 
           // CATEGORY 5: GENERAL
-          { id: 'psu_root', name: 'Power Supply Unit' },
-          { parent: 'psu_root', name: 'Build & Test', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }
+          { id: 'psu', name: 'Power Supply (PSU)' },
+          { parent: 'psu', name: 'Build & Test', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) },
+
+          { id: 'board', name: 'Main PCB' },
+          { parent: 'board', name: 'Schematic & Fab', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }
         ]
       }]
     });
 
-    // MOUSE WHEEL SCRIPT: Standard logic that respects the 15-row view
-    document.getElementById('container').addEventListener('wheel', function(e) {
-      const yAxis = chart.yAxis[0];
-      const ext = yAxis.getExtremes();
-      const viewSize = 15;
-      
-      if (ext.dataMax <= viewSize) return;
-
-      e.preventDefault();
-      const step = e.deltaY > 0 ? 1 : -1;
-      let newMin = Math.round(ext.min) + step;
-
-      if (newMin < 0) newMin = 0;
-      if (newMin + viewSize > ext.dataMax) newMin = Math.max(0, ext.dataMax - viewSize);
-
-      yAxis.setExtremes(newMin, newMin + viewSize, true, false);
-    }, { passive: false });
+    // Zoom Button Handlers
+    document.getElementById('btn-month').addEventListener('click', () => {
+      chart.xAxis[0].setExtremes(projectStart, projectStart + (day * 30));
+    });
+    document.getElementById('btn-quarter').addEventListener('click', () => {
+      chart.xAxis[0].setExtremes(projectStart, projectStart + (day * 90));
+    });
+    document.getElementById('btn-all').addEventListener('click', () => {
+      chart.xAxis[0].setExtremes(projectStart, projectEnd);
+    });
   </script>
 </body>
 </html>
