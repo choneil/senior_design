@@ -5,19 +5,15 @@ const projectEnd = Date.UTC(2026, 10, 30); // Nov 30, 2026
 
 Highcharts.ganttChart('container', {
   chart: {
-    // Enable the custom buttons to control the timeline zoom
     events: {
       load() {
         const xAxis = this.xAxis[0];
-        
         document.getElementById('btn-month').addEventListener('click', () => {
           xAxis.setExtremes(projectStart, projectStart + (day * 30));
         });
-
         document.getElementById('btn-quarter').addEventListener('click', () => {
           xAxis.setExtremes(projectStart, projectStart + (day * 90));
         });
-
         document.getElementById('btn-all').addEventListener('click', () => {
           xAxis.setExtremes(projectStart, projectEnd);
         });
@@ -25,7 +21,7 @@ Highcharts.ganttChart('container', {
     }
   },
 
-  title: { text: null }, // Hide default title since we have an HTML header
+  title: { text: null },
 
   xAxis: {
     currentDateIndicator: true,
@@ -33,16 +29,6 @@ Highcharts.ganttChart('container', {
     max: projectEnd
   },
 
-  // Enable vertical scrolling so expanding all categories doesn't squish rows
-  yAxis: {
-    max: 12, // Limits the view to 12 rows at a time
-    scrollbar: {
-      enabled: true,
-      showFull: false
-    }
-  },
-
-  // Enable the draggable timeline minimap at the bottom
   navigator: {
     enabled: true,
     series: {

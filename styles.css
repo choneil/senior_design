@@ -1,27 +1,23 @@
+/* Global Reset */
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
   font-family: Arial, sans-serif;
   background-color: #fcfcfc;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow: hidden; /* Stops the whole page from double-scrolling */
-}
-
+/* Header Styling */
 h2 {
   color: #333;
   margin: 15px 20px 0 20px;
 }
 
+/* Zoom Buttons Container */
 .controls {
   margin: 15px 20px;
 }
 
+/* Zoom Buttons Styling */
 .controls button {
   padding: 8px 16px;
   margin-right: 10px;
@@ -31,27 +27,23 @@ h2 {
   border: none;
   border-radius: 4px;
   font-weight: bold;
+  transition: background-color 0.2s;
 }
 
 .controls button:hover {
   background-color: #005a83;
 }
 
-/* THE WRAPPER HANDLES THE SCROLLING */
-#chart-wrapper {
-  flex: 1;
-  min-height: 0;
+/* * THE CHART CONTAINER 
+ * Notice there are NO height, min-height, flex, or overflow properties here.
+ * The `staticScale: 40` in your script.js will dynamically resize the height 
+ * of this box, allowing the page to scroll beautifully and naturally.
+ */
+#container {
+  width: calc(100% - 40px);
   margin: 0 20px 20px 20px;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background-color: white;
-  overflow-y: auto; /* The magic native scrollbar */
-  overflow-x: hidden;
-}
-
-/* THE CHART IS FORCED TO BE HUGE SO IT NEVER SQUISHES */
-#container {
-  width: 100%;
-  height: 1200px; 
 }
