@@ -25,6 +25,7 @@
     }
     .controls button:hover { background-color: #005a83; }
 
+    /* Your original clean container */
     #container {
       width: 100%;
       height: 800px; 
@@ -55,11 +56,9 @@
     Highcharts.ganttChart('container', {
       chart: {
         events: {
+          // Zoom Buttons
           load() {
-            const chart = this;
-            const xAxis = chart.xAxis[0];
-            
-            // Zoom Buttons
+            const xAxis = this.xAxis[0];
             document.getElementById('btn-month').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectStart + (day * 30));
             });
@@ -69,41 +68,23 @@
             document.getElementById('btn-all').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectEnd);
             });
+          },
+          // THE "SNAP BACK" FIX: If you close a folder while scrolled down, 
+          // this catches the chart before it shows you a blank screen and snaps back up!
+          redraw() {
+            const yAxis = this.yAxis[0];
+            const extremes = yAxis.getExtremes();
+            if (!extremes) return;
 
-            // Your working mouse-wheel scroll logic
-            document.getElementById('container').addEventListener('wheel', function(e) {
-              const yAxis = chart.yAxis[0];
-              const extremes = yAxis.getExtremes();
-              
-              if (!extremes) return;
+            const currentMin = Math.round(extremes.min);
+            const dataMax = Math.round(extremes.dataMax);
 
-              const dataMin = Math.max(0, extremes.dataMin || 0); 
-              const dataMax = extremes.dataMax;
-              const viewSize = Math.round(extremes.max - extremes.min);
-
-              // Ignore scroll if all rows fit natively
-              if (dataMax - dataMin <= viewSize) return;
-
-              e.preventDefault();
-
-              const step = e.deltaY > 0 ? 1 : -1; 
-              let newMin = Math.round(extremes.min) + step;
-              let newMax = newMin + viewSize;
-
-              if (newMax > dataMax) {
-                newMax = dataMax;
-                newMin = newMax - viewSize;
-              }
-
-              if (newMin < dataMin) {
-                newMin = dataMin;
-                newMax = newMin + viewSize;
-              }
-
-              if (newMin !== Math.round(extremes.min)) {
-                yAxis.setExtremes(newMin, newMax, true, false);
-              }
-            }, { passive: false });
+            if (currentMin > dataMax) {
+              const viewSize = 12; // Your max rows
+              const newMin = Math.max(0, dataMax - viewSize);
+              // Snap back instantly
+              setTimeout(() => yAxis.setExtremes(newMin, newMin + viewSize, true, false), 10);
+            }
           }
         }
       },
@@ -116,26 +97,22 @@
         max: projectEnd
       },
 
-      // THE FIX: Removed the buggy yAxis.scrollbar that was deleting your Navigator.
-      // We just lock the view to 12 rows and let the mouse wheel do the work.
+      // YOUR ORIGINAL VERTICAL SCROLLBAR: Looks exactly how you want it
       yAxis: {
-        min: 0,
-        max: 12
-      },
-
-      // YOUR TIMELINE SCALER IS BACK
-      navigator: {
-        enabled: true,
-        series: { 
-          type: 'gantt', 
-          pointPlacement: 0.5, 
-          pointPadding: 0.25 
+        max: 12, 
+        scrollbar: { 
+          enabled: true, 
+          showFull: false 
         }
       },
 
-      scrollbar: { 
-        enabled: true 
+      // YOUR ORIGINAL TIMELINE SCALER: Pinned beautifully at the bottom
+      navigator: {
+        enabled: true,
+        series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
       },
+
+      scrollbar: { enabled: true },
 
       series: [{
         name: 'Project Timeline',
@@ -187,6 +164,43 @@
         ]
       }]
     });
+
+    // THE MOUSE WHEEL FIX: Makes the scroll wheel work perfectly within bounds
+    document.getElementById('container').addEventListener('wheel', function(e) {
+      const chart = Highcharts.charts[0];
+      if (!chart || !chart.yAxis || !chart.yAxis[0]) return;
+
+      const yAxis = chart.yAxis[0];
+      const extremes = yAxis.getExtremes();
+      if (!extremes) return;
+
+      const dataMax = Math.round(extremes.dataMax);
+      const dataMin = Math.max(0, Math.round(extremes.dataMin));
+      const viewSize = 12;
+
+      // Ignore scroll wheel if all rows already fit on the screen
+      if (dataMax - dataMin <= viewSize) return;
+
+      e.preventDefault(); 
+
+      const step = e.deltaY > 0 ? 1 : -1; 
+      let newMin = Math.round(extremes.min) + step;
+
+      // Prevent scrolling past the absolute bottom
+      if (newMin + viewSize > dataMax) {
+        newMin = dataMax - viewSize;
+      }
+
+      // Prevent scrolling past the absolute top
+      if (newMin < dataMin) {
+        newMin = dataMin;
+      }
+
+      // Apply the scroll
+      if (newMin !== Math.round(extremes.min)) {
+        yAxis.setExtremes(newMin, newMin + viewSize, true, false);
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
