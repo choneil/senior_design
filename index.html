@@ -4,17 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Architecture Gantt Chart</title>
+  
   <script src="https://code.highcharts.com/gantt/highcharts-gantt.js"></script>
+  
   <style>
-    body {
+    /* Prevent the browser from ever scrolling sideways */
+    html, body {
       margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
+      padding: 0;
+      overflow-x: hidden;
       background-color: #fcfcfc;
-      overflow-x: hidden; /* Prevent the whole page from ever scrolling sideways */
+      font-family: Arial, sans-serif;
     }
+
+    body { padding: 20px; }
     h2 { color: #333; margin-top: 0; }
     .controls { margin-bottom: 15px; }
+
     .controls button {
       padding: 8px 16px; margin-right: 10px; cursor: pointer;
       background-color: #0071A4; color: white; border: none;
@@ -22,15 +28,16 @@
     }
     .controls button:hover { background-color: #005a83; }
 
+    /* FIXED CONTAINER: This box will NEVER change size */
     #container {
       width: 100%;
-      max-width: 1200px; /* Limits how wide it can get on big monitors */
       height: 800px; 
-      margin: 0 auto;
+      max-width: 100vw;
       border: 1px solid #ddd;
       border-radius: 4px;
       background-color: white;
-      overflow: hidden; /* Lock the container so it cannot grow sideways */
+      box-sizing: border-box;
+      overflow: hidden; /* Hard lock */
     }
   </style>
 </head>
@@ -51,14 +58,13 @@
     const projectStart = Date.UTC(2026, 3, 6); 
     const projectEnd = Date.UTC(2026, 10, 30); 
 
-    Highcharts.ganttChart('container', {
+    const chart = Highcharts.ganttChart('container', {
       chart: {
-        panning: { enabled: false }, // Disable horizontal finger/mouse panning
+        spacingLeft: 1,
+        spacingRight: 1,
         events: {
           load() {
-            const chart = this;
-            const xAxis = chart.xAxis[0];
-            
+            const xAxis = this.xAxis[0];
             document.getElementById('btn-month').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectStart + (day * 30));
             });
@@ -68,42 +74,22 @@
             document.getElementById('btn-all').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectEnd);
             });
-
-            // FIXED MOUSE WHEEL
-            document.getElementById('container').addEventListener('wheel', function(e) {
-              const yAxis = chart.yAxis[0];
-              const extremes = yAxis.getExtremes();
-              if (!extremes) return;
-
-              const dataMax = Math.round(extremes.dataMax);
-              const viewSize = 12;
-
-              if (dataMax <= viewSize) return;
-
-              e.preventDefault(); 
-              const step = e.deltaY > 0 ? 1 : -1; 
-              let newMin = Math.round(extremes.min) + step;
-
-              if (newMin + viewSize > dataMax) newMin = dataMax - viewSize;
-              if (newMin < 0) newMin = 0;
-
-              if (newMin !== Math.round(extremes.min)) {
-                yAxis.setExtremes(newMin, newMin + viewSize, true, false);
-              }
-            }, { passive: false });
           },
+          // FAILSAFE: If a folder closes, snap the view back up
           render() {
-            // Failsafe: if a folder closes, reset view to prevent staring at void
             const yAxis = this.yAxis[0];
-            const extremes = yAxis.getExtremes();
-            if (extremes && extremes.dataMax <= 12 && extremes.min !== 0) {
-              setTimeout(() => yAxis.setExtremes(0, 12, true, false), 0);
+            const ext = yAxis.getExtremes();
+            if (ext.dataMax < ext.max || ext.min > ext.dataMax) {
+               yAxis.setExtremes(0, 12, true, false);
             }
           }
         }
       },
 
       title: { text: null },
+
+      // Horizontal Scrollbar is explicitly OFF to stop the "sideways" bug
+      scrollbar: { enabled: false },
 
       xAxis: {
         currentDateIndicator: true,
@@ -113,27 +99,26 @@
 
       yAxis: {
         min: 0,
-        max: 12,
-        staticScale: null, // Ensure rows fit the 800px height
+        max: 12, // Keeps rows consistently sized
         labels: {
           style: {
-            width: '250px', // Lock the label width
-            textOverflow: 'ellipsis' // Cut off long names instead of widening chart
+            width: '200px', // Prevents long text from pushing the chart sideways
+            textOverflow: 'ellipsis'
           }
         },
-        scrollbar: { enabled: true }
+        scrollbar: { 
+          enabled: true, 
+          showFull: false 
+        }
       },
 
+      // The "Cool" Navigator Scaler
       navigator: {
         enabled: true,
-        enabled: true,
-        height: 50,
-        // Disable the ability to scroll sideways via the navigator window
-        xAxis: { labels: { enabled: true } } 
+        liveRedraw: true,
+        height: 45,
+        series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
       },
-
-      // Disable the bottom horizontal scrollbar entirely
-      scrollbar: { enabled: false }, 
 
       series: [{
         name: 'Project Timeline',
@@ -185,6 +170,27 @@
         ]
       }]
     });
+
+    // MOUSEWHEEL SCRIPT: Optimized for performance and void-protection
+    document.getElementById('container').addEventListener('wheel', function(e) {
+      const yAxis = chart.yAxis[0];
+      const ext = yAxis.getExtremes();
+      const viewSize = 12;
+      
+      if (ext.dataMax <= viewSize) return;
+
+      e.preventDefault();
+      const step = e.deltaY > 0 ? 1 : -1;
+      let newMin = Math.round(ext.min) + step;
+
+      // Bounds check
+      if (newMin < 0) newMin = 0;
+      if (newMin + viewSize > ext.dataMax) newMin = Math.max(0, ext.dataMax - viewSize);
+
+      if (newMin !== Math.round(ext.min)) {
+        yAxis.setExtremes(newMin, newMin + viewSize, true, false);
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
