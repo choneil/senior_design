@@ -107,4 +107,39 @@ Highcharts.ganttChart('container', {
       { parent: 'bed', name: 'Thermal Systems Build', start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }
     ]
   }]
+})
+document.getElementById('container').addEventListener('wheel', function(e) {
+  const chart = Highcharts.charts[0]; // Grabs your rendered Gantt chart
+  if (!chart || !chart.yAxis || !chart.yAxis[0]) return;
+
+  const yAxis = chart.yAxis[0];
+  const extremes = yAxis.getExtremes();
+
+  // If the scrollbar isn't active (meaning all rows currently fit on screen), do nothing
+  if (extremes.dataMax <= extremes.max) return;
+
+  // Prevent the main webpage from scrolling down while hovering over the chart
+  e.preventDefault(); 
+
+  // Determine scroll direction (deltaY > 0 means scrolling down)
+  // Step by 1 to move exactly one task row per wheel tick
+  const step = e.deltaY > 0 ? 1 : -1; 
+  
+  let newMin = extremes.min + step;
+  let newMax = extremes.max + step;
+
+  // Enforce boundaries so it doesn't scroll past the very top
+  if (newMin < extremes.dataMin) {
+    newMin = extremes.dataMin;
+    newMax = extremes.dataMin + (extremes.max - extremes.min);
+  }
+  
+  // Enforce boundaries so it doesn't scroll past the very bottom
+  if (newMax > extremes.dataMax) {
+    newMax = extremes.dataMax;
+    newMin = extremes.dataMax - (extremes.max - extremes.min);
+  }
+
+  // Move the chart view (true = redraw, false = disable animation for instant smooth scrolling)
+  yAxis.setExtremes(newMin, newMax, true, false);
 });
