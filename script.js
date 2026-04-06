@@ -33,7 +33,16 @@ Highcharts.ganttChart('container', {
     max: projectEnd
   },
 
-  // Enable the draggable timeline minimap at the bottom!
+  // Enable vertical scrolling so expanding all categories doesn't squish rows
+  yAxis: {
+    max: 12, // Limits the view to 12 rows at a time
+    scrollbar: {
+      enabled: true,
+      showFull: false
+    }
+  },
+
+  // Enable the draggable timeline minimap at the bottom
   navigator: {
     enabled: true,
     series: {
