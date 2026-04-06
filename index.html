@@ -8,15 +8,26 @@
   <script src="https://code.highcharts.com/gantt/highcharts-gantt.js"></script>
   
   <style>
+    /* Clean CSS Reset */
     html, body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       font-family: Arial, sans-serif;
       background-color: #fcfcfc;
     }
 
+    /* Fixed header so the title and buttons stay at the top */
+    .header-container {
+      position: sticky;
+      top: 0;
+      background-color: #fcfcfc;
+      padding: 20px 20px 10px 20px;
+      z-index: 1000;
+      border-bottom: 1px solid #ddd;
+    }
+
     h2 { color: #333; margin-top: 0; }
-    .controls { margin-bottom: 20px; }
+    .controls { margin-bottom: 5px; }
 
     .controls button {
       padding: 8px 16px; 
@@ -31,24 +42,36 @@
 
     .controls button:hover { background-color: #005a83; }
 
+    /* The chart container has NO height constraints. It will grow as tall as it needs to be */
     #container {
-      width: 100%;
-      height: 750px; 
+      width: calc(100% - 40px);
+      margin: 20px;
       border: 1px solid #ddd;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       background-color: white;
     }
+
+    /* THE MAGIC FIX: Sticky position the Highcharts X-Axis (Timeline) */
+    .highcharts-xaxis-labels, 
+    .highcharts-xaxis-grid, 
+    .highcharts-axis-line {
+      position: sticky !important;
+      top: 90px !important; /* Pushes it just below your header buttons */
+      z-index: 999 !important;
+      background-color: white; /* Prevents rows from showing through the timeline */
+    }
   </style>
 </head>
 <body>
 
-  <h2>Project Schedule: April 6 - Nov 30</h2>
-  
-  <div class="controls">
-    <button id="btn-month">1 Month Zoom</button>
-    <button id="btn-quarter">3 Month Zoom</button>
-    <button id="btn-all">Show All</button>
+  <div class="header-container">
+    <h2>Project Schedule: April 6 - Nov 30</h2>
+    <div class="controls">
+      <button id="btn-month">1 Month Zoom</button>
+      <button id="btn-quarter">3 Month Zoom</button>
+      <button id="btn-all">Show All</button>
+    </div>
   </div>
 
   <div id="container"></div>
@@ -60,12 +83,10 @@
 
     Highcharts.ganttChart('container', {
       chart: {
+        // No internal scroll events needed!
         events: {
           load() {
-            const chart = this;
-            const xAxis = chart.xAxis[0];
-            
-            // Hook up zoom buttons
+            const xAxis = this.xAxis[0];
             document.getElementById('btn-month').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectStart + (day * 30));
             });
@@ -75,38 +96,6 @@
             document.getElementById('btn-all').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectEnd);
             });
-
-            // --- THE BULLETPROOF SCROLL WHEEL FIX ---
-            document.getElementById('container').addEventListener('wheel', function(e) {
-              const yAxis = chart.yAxis[0];
-              const extremes = yAxis.getExtremes();
-              const viewSize = 12; // Strictly locks the math to 12 rows
-
-              // If everything fits on screen, do nothing
-              if (extremes.dataMax - extremes.dataMin <= viewSize) return;
-
-              e.preventDefault(); // Stop webpage from moving
-
-              const step = e.deltaY > 0 ? 1 : -1;
-
-              // Force current position to be a whole number so Highcharts doesn't crash
-              let currentMin = Math.round(extremes.min);
-              if (isNaN(currentMin)) currentMin = 0; 
-
-              let newMin = currentMin + step;
-
-              // Hard boundaries so you can't scroll past the top or bottom
-              if (newMin < extremes.dataMin) {
-                newMin = extremes.dataMin;
-              } else if (newMin + viewSize > extremes.dataMax) {
-                newMin = extremes.dataMax - viewSize;
-              }
-
-              // Apply the scroll smoothly
-              if (newMin !== currentMin) {
-                yAxis.setExtremes(newMin, newMin + viewSize, true, false);
-              }
-            }, { passive: false }); // Required by modern browsers to allow preventDefault()
           }
         }
       },
@@ -119,20 +108,18 @@
         max: projectEnd
       },
 
-      // Explicitly set min to 0 to prevent initial rendering bugs
+      // FORCE EVERY ROW TO BE 40px TALL. 
+      // The chart will automatically push the page down when folders open.
       yAxis: {
-        min: 0,
-        max: 12, 
-        scrollbar: { 
-          enabled: true, 
-          showFull: false 
-        }
+        staticScale: 40
       },
 
       navigator: {
         enabled: true,
         series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
       },
+
+      scrollbar: { enabled: true },
 
       series: [{
         name: 'Project Timeline',
