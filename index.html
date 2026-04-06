@@ -4,20 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Architecture Gantt Chart</title>
-  
   <script src="https://code.highcharts.com/gantt/highcharts-gantt.js"></script>
-  
   <style>
     body {
       margin: 0;
       padding: 20px;
       font-family: Arial, sans-serif;
       background-color: #fcfcfc;
+      overflow-x: hidden; /* Prevent the whole page from ever scrolling sideways */
     }
-
     h2 { color: #333; margin-top: 0; }
     .controls { margin-bottom: 15px; }
-
     .controls button {
       padding: 8px 16px; margin-right: 10px; cursor: pointer;
       background-color: #0071A4; color: white; border: none;
@@ -25,14 +22,15 @@
     }
     .controls button:hover { background-color: #005a83; }
 
-    /* Your original fixed container. Keeps everything safely on screen. */
     #container {
       width: 100%;
+      max-width: 1200px; /* Limits how wide it can get on big monitors */
       height: 800px; 
+      margin: 0 auto;
       border: 1px solid #ddd;
       border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       background-color: white;
+      overflow: hidden; /* Lock the container so it cannot grow sideways */
     }
   </style>
 </head>
@@ -55,9 +53,12 @@
 
     Highcharts.ganttChart('container', {
       chart: {
+        panning: { enabled: false }, // Disable horizontal finger/mouse panning
         events: {
           load() {
-            const xAxis = this.xAxis[0];
+            const chart = this;
+            const xAxis = chart.xAxis[0];
+            
             document.getElementById('btn-month').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectStart + (day * 30));
             });
@@ -67,28 +68,36 @@
             document.getElementById('btn-all').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectEnd);
             });
+
+            // FIXED MOUSE WHEEL
+            document.getElementById('container').addEventListener('wheel', function(e) {
+              const yAxis = chart.yAxis[0];
+              const extremes = yAxis.getExtremes();
+              if (!extremes) return;
+
+              const dataMax = Math.round(extremes.dataMax);
+              const viewSize = 12;
+
+              if (dataMax <= viewSize) return;
+
+              e.preventDefault(); 
+              const step = e.deltaY > 0 ? 1 : -1; 
+              let newMin = Math.round(extremes.min) + step;
+
+              if (newMin + viewSize > dataMax) newMin = dataMax - viewSize;
+              if (newMin < 0) newMin = 0;
+
+              if (newMin !== Math.round(extremes.min)) {
+                yAxis.setExtremes(newMin, newMin + viewSize, true, false);
+              }
+            }, { passive: false });
           },
-          
-          // THE "SNAP-BACK" FAILSAFE: Fixes the crash when you close a folder!
           render() {
+            // Failsafe: if a folder closes, reset view to prevent staring at void
             const yAxis = this.yAxis[0];
             const extremes = yAxis.getExtremes();
-            if (!extremes) return;
-
-            const dataMax = Math.round(extremes.dataMax);
-            const currentMin = Math.round(extremes.min);
-            const viewSize = 12; // Maximum rows visible at one time
-
-            // Scenario 1: You closed a folder and all remaining tasks fit on screen.
-            // Action: Snap the camera to the very top (Row 0).
-            if (dataMax <= viewSize && currentMin !== 0) {
-              setTimeout(() => yAxis.setExtremes(0, viewSize, true, false), 0);
-            } 
-            // Scenario 2: You closed a folder and your camera is staring at empty space.
-            // Action: Snap the camera exactly to the new bottom of the list.
-            else if (dataMax > viewSize && currentMin + viewSize > dataMax) {
-              const newMin = dataMax - viewSize;
-              setTimeout(() => yAxis.setExtremes(newMin, dataMax, true, false), 0);
+            if (extremes && extremes.dataMax <= 12 && extremes.min !== 0) {
+              setTimeout(() => yAxis.setExtremes(0, 12, true, false), 0);
             }
           }
         }
@@ -102,23 +111,29 @@
         max: projectEnd
       },
 
-      // Restricts the view to 12 rows at a time so row heights are consistent
       yAxis: {
         min: 0,
-        max: 12, 
-        scrollbar: { 
-          enabled: true, 
-          showFull: false 
-        }
+        max: 12,
+        staticScale: null, // Ensure rows fit the 800px height
+        labels: {
+          style: {
+            width: '250px', // Lock the label width
+            textOverflow: 'ellipsis' // Cut off long names instead of widening chart
+          }
+        },
+        scrollbar: { enabled: true }
       },
 
-      // The sliding timeline window, beautifully pinned to the bottom
       navigator: {
         enabled: true,
-        series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
+        enabled: true,
+        height: 50,
+        // Disable the ability to scroll sideways via the navigator window
+        xAxis: { labels: { enabled: true } } 
       },
 
-      scrollbar: { enabled: true },
+      // Disable the bottom horizontal scrollbar entirely
+      scrollbar: { enabled: false }, 
 
       series: [{
         name: 'Project Timeline',
@@ -170,43 +185,6 @@
         ]
       }]
     });
-
-    // THE MOUSE WHEEL SCRIPT: Smooth scrolling that cannot crash
-    document.getElementById('container').addEventListener('wheel', function(e) {
-      const chart = Highcharts.charts[0];
-      if (!chart || !chart.yAxis || !chart.yAxis[0]) return;
-
-      const yAxis = chart.yAxis[0];
-      const extremes = yAxis.getExtremes();
-      if (!extremes) return;
-
-      const dataMax = Math.round(extremes.dataMax);
-      const dataMin = Math.max(0, Math.round(extremes.dataMin || 0));
-      const viewSize = 12;
-
-      // Ignore scroll wheel if all rows fit perfectly on the screen
-      if (dataMax - dataMin <= viewSize) return;
-
-      e.preventDefault(); 
-
-      const step = e.deltaY > 0 ? 1 : -1; 
-      let newMin = Math.round(extremes.min) + step;
-
-      // Stop scrolling at the bottom boundary
-      if (newMin + viewSize > dataMax) {
-        newMin = dataMax - viewSize;
-      }
-
-      // Stop scrolling at the top boundary
-      if (newMin < dataMin) {
-        newMin = dataMin;
-      }
-
-      // Apply the scroll smoothly without refreshing the whole page
-      if (newMin !== Math.round(extremes.min)) {
-        yAxis.setExtremes(newMin, newMin + viewSize, true, false);
-      }
-    }, { passive: false });
   </script>
 </body>
 </html>
