@@ -25,10 +25,10 @@
     }
     .controls button:hover { background-color: #005a83; }
 
-    /* Lock the container height. Highcharts will handle the scrolling internally. */
+    /* The main container. Locks the dimensions so nothing gets pushed off screen */
     #container {
       width: 100%;
-      height: 800px; 
+      height: 750px; 
       border: 1px solid #ddd;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -54,16 +54,13 @@
     const projectEnd = Date.UTC(2026, 10, 30); 
 
     Highcharts.ganttChart('container', {
-      
       chart: {
-        // THE FIX: This forces a native scrollbar INSIDE the chart.
-        // The Top Dates and Bottom Navigator remain permanently pinned.
-        scrollablePlotArea: {
-          minHeight: 1200 
-        },
         events: {
           load() {
-            const xAxis = this.xAxis[0];
+            const chart = this;
+            const xAxis = chart.xAxis[0];
+            
+            // Zoom Buttons
             document.getElementById('btn-month').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectStart + (day * 30));
             });
@@ -73,6 +70,46 @@
             document.getElementById('btn-all').addEventListener('click', () => {
               xAxis.setExtremes(projectStart, projectEnd);
             });
+
+            // THE BULLETPROOF SCROLL FIX
+            document.getElementById('container').addEventListener('wheel', function(e) {
+              const yAxis = chart.yAxis[0];
+              const extremes = yAxis.getExtremes();
+              
+              if (!extremes) return;
+
+              // Ensure safe whole numbers so the chart engine never crashes
+              const dataMin = Math.max(0, extremes.dataMin); 
+              const dataMax = extremes.dataMax;
+              const viewSize = Math.round(extremes.max - extremes.min);
+
+              // If everything fits on the screen naturally, ignore the scroll wheel
+              if (dataMax - dataMin <= viewSize) return;
+
+              e.preventDefault(); // Stop the webpage from scrolling
+
+              // Scroll 1 row at a time based on wheel direction
+              const step = e.deltaY > 0 ? 1 : -1; 
+              let newMin = Math.round(extremes.min) + step;
+              let newMax = newMin + viewSize;
+
+              // Hard stop at the absolute bottom
+              if (newMax > dataMax) {
+                newMax = dataMax;
+                newMin = newMax - viewSize;
+              }
+
+              // Hard stop at the absolute top
+              if (newMin < dataMin) {
+                newMin = dataMin;
+                newMax = newMin + viewSize;
+              }
+
+              // Update the chart instantly without animation to prevent lag
+              if (newMin !== Math.round(extremes.min)) {
+                yAxis.setExtremes(newMin, newMax, true, false);
+              }
+            }, { passive: false });
           }
         }
       },
@@ -85,19 +122,22 @@
         max: projectEnd
       },
 
-      // NO staticScale, NO max rows. Just standard rendering.
+      // THIS manages the vertical space perfectly between the dates and the navigator
       yAxis: {
-        uniqueNames: true
+        min: 0,
+        max: 12, 
+        scrollbar: { 
+          enabled: true, 
+          showFull: false 
+        }
       },
 
-      // BRINGS BACK THE COOL SLIDING TIMELINE AT THE BOTTOM
+      // This restores the cool sliding timeline at the bottom!
       navigator: {
         enabled: true,
         liveRedraw: true,
         series: { type: 'gantt', pointPlacement: 0.5, pointPadding: 0.25 }
       },
-
-      scrollbar: { enabled: true },
 
       series: [{
         name: 'Project Timeline',
