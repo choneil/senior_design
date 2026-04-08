@@ -11,6 +11,22 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0F1117; }
     #root { min-height: 100vh; }
+    input[type="file"]::file-selector-button {
+      background: #1A1D28;
+      color: #A0A4B4;
+      border: 1px solid #2A2D3A;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: all 0.2s;
+    }
+    input[type="file"]::file-selector-button:hover {
+      background: #242838;
+      color: #E0E0E6;
+    }
   </style>
 </head>
 <body>
@@ -19,85 +35,144 @@
     const { useState, useRef, useEffect, useMemo, useCallback } = React;
 
     const DAY = 86400000;
-    const PROJECT_START = Date.UTC(2026, 3, 6);
-    const PROJECT_END = Date.UTC(2026, 10, 30);
-
-    const CATEGORIES = [
-      {
-        id: "solder", label: "Solder Dispensing", owner: "Chuck", color: "#E8590C",
-        tasks: [
-          { name: "Contact suppliers", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 3, 12) },
-          { name: "Machining tolerances", start: Date.UTC(2026, 3, 13), end: Date.UTC(2026, 3, 19) },
-          { name: "Spec screw/motor", start: Date.UTC(2026, 3, 20), end: Date.UTC(2026, 3, 26) },
-          { name: "Source components", start: Date.UTC(2026, 3, 27), end: Date.UTC(2026, 4, 3) },
-          { name: "Draft prototype", start: Date.UTC(2026, 4, 11), end: Date.UTC(2026, 4, 17) },
-          { name: "Print prototype", start: Date.UTC(2026, 4, 18), end: Date.UTC(2026, 4, 24) },
-          { name: "Design mounting", start: Date.UTC(2026, 4, 25), end: Date.UTC(2026, 4, 31) },
-          { name: "Air pressure system", start: Date.UTC(2026, 5, 1), end: Date.UTC(2026, 5, 7) },
-          { name: "Pressure testing", start: Date.UTC(2026, 5, 8), end: Date.UTC(2026, 5, 21) },
-          { name: "Assemble mock-up", start: Date.UTC(2026, 5, 22), end: Date.UTC(2026, 5, 28) },
-          { name: "Test solder delivery", start: Date.UTC(2026, 5, 29), end: Date.UTC(2026, 6, 5) },
-          { name: "Prototype testing", start: Date.UTC(2026, 6, 6), end: Date.UTC(2026, 6, 26) },
-          { name: "Assemble auger valve", start: Date.UTC(2026, 7, 3), end: Date.UTC(2026, 7, 9) },
-          { name: "Optimize operation", start: Date.UTC(2026, 9, 5), end: Date.UTC(2026, 10, 29) },
-          { name: "Reliable Operation", start: Date.UTC(2026, 10, 30), end: Date.UTC(2026, 10, 30), milestone: true },
-        ],
-      },
-      {
-        id: "file", label: "File Handling", owner: "Andy", color: "#1971C2",
-        tasks: [
-          { name: "File Architecture", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { name: "Parser Implementation", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
-        ],
-      },
-      {
-        id: "comp", label: "Component Dispensing", owner: "Amar", color: "#2F9E44",
-        tasks: [
-          { name: "Dispenser Design", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { name: "Feeder Assembly", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
-        ],
-      },
-      {
-        id: "gantry", label: "Gantry System", owner: "Ainaan", color: "#9C36B5",
-        tasks: [
-          { name: "Mechanics & Rail", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 6, 15) },
-          { name: "Software Control", start: Date.UTC(2026, 6, 16), end: Date.UTC(2026, 10, 30) },
-        ],
-      },
-      {
-        id: "psu", label: "Power Supply", owner: "Team", color: "#E67700",
-        tasks: [{ name: "Build & Test", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }],
-      },
-      {
-        id: "board", label: "Main PCB", owner: "Team", color: "#C92A2A",
-        tasks: [{ name: "Schematic & Fab", start: Date.UTC(2026, 3, 6), end: Date.UTC(2026, 10, 30) }],
-      },
-    ];
+    const DEFAULT_START = Date.UTC(2026, 3, 6);
+    const DEFAULT_END = Date.UTC(2026, 10, 30);
 
     const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     function fmtDate(ts) { const d = new Date(ts); return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate(); }
     function fmtRange(s, e) { return s === e ? fmtDate(s) : fmtDate(s) + " \u2014 " + fmtDate(e); }
     function daysCount(s, e) { return Math.max(1, Math.round((e - s) / DAY)); }
 
+    const SCHEDULE_FILES = [
+      'schedules/solder_dispensing.csv',
+      'schedules/file_handling.csv',
+      'schedules/component_dispensing.csv',
+      'schedules/gantry_system.csv',
+      'schedules/power_supply.csv',
+      'schedules/main_pcb.csv'
+    ];
+
     function GanttChart() {
+      const [categories, setCategories] = useState([]);
+      const [projectStart, setProjectStart] = useState(DEFAULT_START);
+      const [projectEnd, setProjectEnd] = useState(DEFAULT_END);
+      const [loadingError, setLoadingError] = useState(null);
+      
       const [collapsed, setCollapsed] = useState({});
-      const [viewStart, setViewStart] = useState(PROJECT_START);
-      const [viewEnd, setViewEnd] = useState(PROJECT_END);
+      const [viewStart, setViewStart] = useState(DEFAULT_START);
+      const [viewEnd, setViewEnd] = useState(DEFAULT_END);
       const [tooltip, setTooltip] = useState(null);
       const [isDragging, setIsDragging] = useState(false);
       const [dragState, setDragState] = useState(null);
       const navRef = useRef(null);
 
-      const totalSpan = PROJECT_END - PROJECT_START;
+      const totalSpan = projectEnd - projectStart;
       const toggle = (id) => setCollapsed((p) => {const n = {...p}; n[id] = !n[id]; return n;});
+
+      // Parse array of CSV text contents into timeline format
+      const parseCSVData = useCallback((textArray) => {
+        let loadedCategories = [];
+        const colors = ["#E8590C", "#1971C2", "#2F9E44", "#9C36B5", "#E67700", "#C92A2A", "#F03E3E", "#1098AD"];
+
+        textArray.forEach((text, index) => {
+          if (!text) return;
+          const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+          
+          if (lines.length >= 2) {
+            const headerParts = lines[0].split(',').map(p => p.trim());
+            const label = headerParts[0];
+            const owner = headerParts[1] || "Team";
+            const id = label.toLowerCase().replace(/\s+/g, '-');
+            const color = colors[loadedCategories.length % colors.length];
+
+            const tasks = [];
+            for (let i = 1; i < lines.length; i++) {
+              const parts = lines[i].split(',').map(p => p.trim());
+              if (parts.length < 2) continue;
+
+              const dateStr = parts[0];
+              const taskName = parts[1];
+
+              if (taskName.toUpperCase() === 'TBD') continue;
+
+              const [y, m, d] = dateStr.split('-');
+              if (!y || !m || !d) continue;
+
+              const startTs = Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d));
+              const endTs = startTs + (6 * DAY); // Span Mon-Sun
+
+              tasks.push({
+                name: taskName,
+                start: startTs,
+                end: endTs
+              });
+            }
+
+            if (tasks.length > 0) {
+              loadedCategories.push({ id, label, owner, color, tasks });
+            }
+          }
+        });
+
+        if (loadedCategories.length > 0) {
+          const allTasks = loadedCategories.flatMap(c => c.tasks);
+          const minStart = Math.min(...allTasks.map(t => t.start));
+          const maxEnd = Math.max(...allTasks.map(t => t.end));
+          setProjectStart(minStart);
+          setProjectEnd(maxEnd);
+          setViewStart(minStart);
+          setViewEnd(maxEnd);
+          setCategories(loadedCategories);
+          setLoadingError(null);
+        }
+      }, []);
+
+      // Auto-fetch files on mount
+      useEffect(() => {
+        Promise.all(
+          SCHEDULE_FILES.map(file =>
+            fetch(file)
+              .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.text();
+              })
+              .catch(e => {
+                console.warn(`Could not load ${file}:`, e);
+                return null;
+              })
+          )
+        ).then(texts => {
+          const validTexts = texts.filter(t => t !== null);
+          if (validTexts.length > 0) {
+            parseCSVData(validTexts);
+          } else {
+            setLoadingError("Could not automatically load schedule files. (Make sure you are running a local web server, or upload them manually.)");
+          }
+        });
+      }, [parseCSVData]);
+
+      // Handle Manual Uploads (Fallback)
+      const handleFileUpload = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        Promise.all(
+          files.map(file => {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (evt) => resolve(evt.target.result);
+              reader.readAsText(file);
+            });
+          })
+        ).then(parseCSVData);
+      };
 
       var toPercent = useCallback(function(ts) {
         return ((ts - viewStart) / (viewEnd - viewStart)) * 100;
       }, [viewStart, viewEnd]);
 
-      var navToPercent = function(ts) { return ((ts - PROJECT_START) / totalSpan) * 100; };
+      var navToPercent = function(ts) { return ((ts - projectStart) / totalSpan) * 100; };
 
-      // Clamp bar to visible [0, 100] range
       var barGeo = useCallback(function(s, e) {
         var rawL = toPercent(s);
         var rawR = toPercent(e);
@@ -109,19 +184,20 @@
 
       var rows = useMemo(function() {
         var r = [];
-        CATEGORIES.forEach(function(cat) {
+        categories.forEach(function(cat) {
           r.push({ type: "header", cat: cat });
           if (!collapsed[cat.id]) {
             cat.tasks.forEach(function(t) { r.push({ type: "task", task: t, cat: cat }); });
           }
         });
         return r;
-      }, [collapsed]);
+      }, [categories, collapsed]);
 
       var monthLines = useMemo(function() {
         var lines = [];
-        var d = new Date(Date.UTC(2026, 3, 1));
-        while (d.getTime() <= PROJECT_END + DAY * 31) {
+        var d = new Date(projectStart);
+        d.setUTCDate(1);
+        while (d.getTime() <= projectEnd + DAY * 31) {
           var ts = d.getTime();
           if (ts >= viewStart - DAY * 5 && ts <= viewEnd + DAY * 5) {
             lines.push({ ts: ts, label: MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear() });
@@ -129,17 +205,18 @@
           d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
         }
         return lines;
-      }, [viewStart, viewEnd]);
+      }, [viewStart, viewEnd, projectStart, projectEnd]);
 
       var now = Date.now();
       var todayPct = toPercent(now);
       var showToday = now >= viewStart && now <= viewEnd;
 
       var handleNavMouseDown = function(e) {
+        if (categories.length === 0) return;
         var rect = navRef.current.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var pct = x / rect.width;
-        var clickTs = PROJECT_START + pct * totalSpan;
+        var clickTs = projectStart + pct * totalSpan;
         var winStartPx = (navToPercent(viewStart) / 100) * rect.width;
         var winEndPx = (navToPercent(viewEnd) / 100) * rect.width;
         if (x >= winStartPx && x <= winEndPx) {
@@ -147,23 +224,23 @@
           setDragState({ type: "pan", offsetTs: clickTs - viewStart });
         } else {
           var span = viewEnd - viewStart;
-          var newStart = Math.max(PROJECT_START, Math.min(clickTs - span / 2, PROJECT_END - span));
+          var newStart = Math.max(projectStart, Math.min(clickTs - span / 2, projectEnd - span));
           setViewStart(newStart);
           setViewEnd(newStart + span);
         }
       };
 
       useEffect(function() {
-        if (!isDragging) return;
+        if (!isDragging || categories.length === 0) return;
         var onMove = function(e) {
           var rect = navRef.current.getBoundingClientRect();
           var x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
           var pct = x / rect.width;
-          var ts = PROJECT_START + pct * totalSpan;
+          var ts = projectStart + pct * totalSpan;
           var span = viewEnd - viewStart;
           if (dragState && dragState.type === "pan") {
             var newStart = ts - dragState.offsetTs;
-            newStart = Math.max(PROJECT_START, Math.min(newStart, PROJECT_END - span));
+            newStart = Math.max(projectStart, Math.min(newStart, projectEnd - span));
             setViewStart(newStart);
             setViewEnd(newStart + span);
           }
@@ -172,15 +249,16 @@
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup", onUp);
         return function() { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-      }, [isDragging, dragState, viewEnd, viewStart, totalSpan]);
+      }, [isDragging, dragState, viewEnd, viewStart, totalSpan, projectStart, projectEnd, categories.length]);
 
       var zoomTo = function(days) {
+        if (categories.length === 0) return;
         var span = days * DAY;
         var mid = (viewStart + viewEnd) / 2;
         var s = mid - span / 2;
         var e = mid + span / 2;
-        if (s < PROJECT_START) { s = PROJECT_START; e = s + span; }
-        if (e > PROJECT_END) { e = PROJECT_END; s = e - span; }
+        if (s < projectStart) { s = projectStart; e = s + span; }
+        if (e > projectEnd) { e = projectEnd; s = e - span; }
         setViewStart(s); setViewEnd(e);
       };
 
@@ -207,18 +285,31 @@
         React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20 } },
           React.createElement("div", null,
             React.createElement("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: "#F5F5F7", letterSpacing: "-0.02em" } }, "Project Schedule"),
-            React.createElement("p", { style: { margin: "4px 0 0", fontSize: 13, color: "#6B6F80" } }, "Apr 6 \u2014 Nov 30, 2026")
+            React.createElement("p", { style: { margin: "4px 0 0", fontSize: 13, color: loadingError ? "#FF6B6B" : "#6B6F80" } }, 
+              categories.length ? fmtDate(projectStart) + " \u2014 " + fmtDate(projectEnd) : (loadingError || "Loading schedules...")
+            )
           ),
-          React.createElement("div", { style: { display: "flex", gap: 6 } },
-            [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map(function(z) {
-              return React.createElement("button", {
-                key: z.label,
-                style: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer" },
-                onClick: function() { z.label === "All" ? (setViewStart(PROJECT_START), setViewEnd(PROJECT_END)) : zoomTo(z.days); },
-                onMouseEnter: function(e) { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; },
-                onMouseLeave: function(e) { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; },
-              }, z.label);
-            })
+          React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "center" } },
+            React.createElement("input", {
+              type: "file",
+              multiple: true,
+              accept: ".csv",
+              onChange: handleFileUpload,
+              style: { color: "#A0A4B4", fontSize: 12 },
+              title: "Fallback: Upload CSV files manually"
+            }),
+            React.createElement("div", { style: { display: "flex", gap: 6 } },
+              [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map(function(z) {
+                return React.createElement("button", {
+                  key: z.label,
+                  style: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer", opacity: categories.length ? 1 : 0.5 },
+                  onClick: function() { z.label === "All" ? (setViewStart(projectStart), setViewEnd(projectEnd)) : zoomTo(z.days); },
+                  onMouseEnter: function(e) { if(categories.length) { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; } },
+                  onMouseLeave: function(e) { if(categories.length) { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; } },
+                  disabled: categories.length === 0
+                }, z.label);
+              })
+            )
           )
         ),
 
@@ -229,7 +320,7 @@
           React.createElement("div", { style: { display: "flex", borderBottom: "1px solid #1E2130" } },
             React.createElement("div", { style: { width: LABEL_W, minWidth: LABEL_W, borderRight: "1px solid #1E2130", padding: "10px 16px", fontSize: 11, fontWeight: 600, color: "#5A5E70", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Work Stream"),
             React.createElement("div", { style: { flex: 1, position: "relative", height: 36, overflow: "hidden" } },
-              monthLines.map(function(m, i) {
+              categories.length > 0 && monthLines.map(function(m, i) {
                 var pct = toPercent(m.ts);
                 if (pct < -10 || pct > 105) return null;
                 return React.createElement("div", { key: i, style: { position: "absolute", left: pct + "%", top: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: 8, fontSize: 11, fontWeight: 500, color: "#5A5E70", whiteSpace: "nowrap" } }, m.label);
@@ -238,7 +329,8 @@
           ),
 
           // Rows
-          React.createElement("div", { style: { position: "relative", overflow: "hidden" } },
+          React.createElement("div", { style: { position: "relative", overflow: "hidden", minHeight: categories.length ? "auto" : "150px" } },
+            categories.length === 0 && React.createElement("div", { style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "#5A5E70", fontSize: 14 } }, "No data loaded."),
             rows.map(function(row, ri) {
               if (row.type === "header") {
                 var cat = row.cat;
@@ -283,20 +375,6 @@
                 React.createElement("div", { style: { flex: 1, position: "relative", height: "100%", overflow: "hidden" } },
                   renderGridLines(),
                   renderToday(),
-
-                  // Milestone
-                  (function() {
-                    if (!task.milestone) return null;
-                    var pct = toPercent(task.start);
-                    if (pct < 0 || pct > 100) return null;
-                    return React.createElement("div", {
-                      style: { position: "absolute", left: pct + "%", top: "50%", transform: "translate(-50%, -50%) rotate(45deg)", width: 12, height: 12, background: cat.color, borderRadius: 2, zIndex: 3, cursor: "default", boxShadow: "0 0 8px " + cat.color + "66" },
-                      onMouseEnter: function(e) { var rect = e.target.getBoundingClientRect(); setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, task: task, cat: cat }); },
-                      onMouseLeave: function() { setTooltip(null); },
-                    });
-                  })(),
-
-                  // Bar
                   (function() {
                     if (task.milestone) return null;
                     var geo = barGeo(task.start, task.end);
@@ -319,31 +397,31 @@
             React.createElement("div", {
               ref: navRef,
               onMouseDown: handleNavMouseDown,
-              style: { position: "relative", height: 40, background: "#0F1117", borderRadius: 6, cursor: "pointer", overflow: "hidden", border: "1px solid #1E2130" },
+              style: { position: "relative", height: 40, background: "#0F1117", borderRadius: 6, cursor: categories.length ? "pointer" : "default", overflow: "hidden", border: "1px solid #1E2130" },
             },
-              CATEGORIES.map(function(cat, ci) {
+              categories.map(function(cat, ci) {
                 return cat.tasks.map(function(t, ti) {
                   var l = navToPercent(t.start);
                   var w = Math.max(0.3, navToPercent(t.end) - l);
-                  var ySlot = (ci / CATEGORIES.length) * 28 + 4;
+                  var ySlot = categories.length > 0 ? (ci / categories.length) * 28 + 4 : 4;
                   return React.createElement("div", { key: cat.id + "-" + ti, style: { position: "absolute", left: l + "%", width: w + "%", top: ySlot, height: 4, borderRadius: 2, background: cat.color, opacity: 0.6 } });
                 });
               }),
-              React.createElement("div", { style: { position: "absolute", left: navToPercent(viewStart) + "%", width: (navToPercent(viewEnd) - navToPercent(viewStart)) + "%", top: 0, bottom: 0, background: "rgba(255,255,255,0.06)", borderLeft: "2px solid #4A90D9", borderRight: "2px solid #4A90D9", borderRadius: 4 } }),
-              now >= PROJECT_START && now <= PROJECT_END ? React.createElement("div", { style: { position: "absolute", left: navToPercent(now) + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.6 } }) : null
+              categories.length > 0 && React.createElement("div", { style: { position: "absolute", left: navToPercent(viewStart) + "%", width: (navToPercent(viewEnd) - navToPercent(viewStart)) + "%", top: 0, bottom: 0, background: "rgba(255,255,255,0.06)", borderLeft: "2px solid #4A90D9", borderRight: "2px solid #4A90D9", borderRadius: 4 } }),
+              categories.length > 0 && now >= projectStart && now <= projectEnd ? React.createElement("div", { style: { position: "absolute", left: navToPercent(now) + "%", top: 0, bottom: 0, width: 2, background: "#FF6B6B", opacity: 0.6 } }) : null
             )
           )
         ),
 
         // Legend
         React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" } },
-          CATEGORIES.map(function(cat) {
+          categories.map(function(cat) {
             return React.createElement("div", { key: cat.id, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
               React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: cat.color } }),
               cat.label
             );
           }),
-          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
+          categories.length > 0 && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6B6F80" } },
             React.createElement("span", { style: { width: 8, height: 2, background: "#FF6B6B", borderRadius: 1 } }),
             "Today"
           )
