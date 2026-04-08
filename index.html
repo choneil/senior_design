@@ -11,22 +11,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0F1117; }
     #root { min-height: 100vh; }
-    input[type="file"]::file-selector-button {
-      background: #1A1D28;
-      color: #A0A4B4;
-      border: 1px solid #2A2D3A;
-      padding: 5px 14px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-right: 10px;
-      transition: all 0.2s;
-    }
-    input[type="file"]::file-selector-button:hover {
-      background: #242838;
-      color: #E0E0E6;
-    }
   </style>
 </head>
 <body>
@@ -146,26 +130,10 @@
           if (validTexts.length > 0) {
             parseCSVData(validTexts);
           } else {
-            setLoadingError("Could not automatically load schedule files. (Make sure you are running a local web server, or upload them manually.)");
+            setLoadingError("Could not load schedule files. Verify they exist in the /schedules/ directory.");
           }
         });
       }, [parseCSVData]);
-
-      // Handle Manual Uploads (Fallback)
-      const handleFileUpload = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        Promise.all(
-          files.map(file => {
-            return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = (evt) => resolve(evt.target.result);
-              reader.readAsText(file);
-            });
-          })
-        ).then(parseCSVData);
-      };
 
       var toPercent = useCallback(function(ts) {
         return ((ts - viewStart) / (viewEnd - viewStart)) * 100;
@@ -289,27 +257,17 @@
               categories.length ? fmtDate(projectStart) + " \u2014 " + fmtDate(projectEnd) : (loadingError || "Loading schedules...")
             )
           ),
-          React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "center" } },
-            React.createElement("input", {
-              type: "file",
-              multiple: true,
-              accept: ".csv",
-              onChange: handleFileUpload,
-              style: { color: "#A0A4B4", fontSize: 12 },
-              title: "Fallback: Upload CSV files manually"
-            }),
-            React.createElement("div", { style: { display: "flex", gap: 6 } },
-              [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map(function(z) {
-                return React.createElement("button", {
-                  key: z.label,
-                  style: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer", opacity: categories.length ? 1 : 0.5 },
-                  onClick: function() { z.label === "All" ? (setViewStart(projectStart), setViewEnd(projectEnd)) : zoomTo(z.days); },
-                  onMouseEnter: function(e) { if(categories.length) { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; } },
-                  onMouseLeave: function(e) { if(categories.length) { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; } },
-                  disabled: categories.length === 0
-                }, z.label);
-              })
-            )
+          React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } },
+            [{ label: "1M", days: 30 }, { label: "3M", days: 90 }, { label: "All", days: 0 }].map(function(z) {
+              return React.createElement("button", {
+                key: z.label,
+                style: { padding: "5px 14px", fontSize: 12, fontWeight: 600, background: "#1A1D28", color: "#A0A4B4", border: "1px solid #2A2D3A", borderRadius: 6, cursor: "pointer", opacity: categories.length ? 1 : 0.5 },
+                onClick: function() { z.label === "All" ? (setViewStart(projectStart), setViewEnd(projectEnd)) : zoomTo(z.days); },
+                onMouseEnter: function(e) { if(categories.length) { e.target.style.background = "#242838"; e.target.style.color = "#E0E0E6"; } },
+                onMouseLeave: function(e) { if(categories.length) { e.target.style.background = "#1A1D28"; e.target.style.color = "#A0A4B4"; } },
+                disabled: categories.length === 0
+              }, z.label);
+            })
           )
         ),
 
