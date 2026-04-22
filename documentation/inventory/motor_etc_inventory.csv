@@ -1,0 +1,12 @@
+number, name, count,
+1, nema 17 stepper (no attachments), 3,
+2, nema 17 stepper pancake (extrusion head), 1,
+3, nema 17 stepper (mount parallel to rail), 2,
+4, nema 17 stepper (mount perpendiculart to rail), 2,
+5, 2gt 6mm timing belt (~32 inches closed loop), 1,
+6, 2gt 6mm timing belt (~32 inches open loop), 1,
+7, 2gt 6mm timing belt (~37 inches open loop), 1, 
+8, t8 leadscrew (~20 inches), 2,
+9, t8 leadscrew-to-stepper coupling, 2,
+10, bearings, 15,
+

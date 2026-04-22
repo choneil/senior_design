@@ -1,0 +1,6 @@
+number,name,profile,length,count
+1,Z-axis vertical upright,2040,640,2
+2,Y-axis bed rail,2060,540,1
+3,X-axis gantry,2060,490,1
+4,Base rail under Z upright,2040,400,2
+5,Top crossbar,4040,370,2
