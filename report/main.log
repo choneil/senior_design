@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.1)  1 MAY 2026 17:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.1)  1 MAY 2026 17:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -519,34 +519,34 @@ Package pdftex.def Info: objective_tree.png  used on input line 5.
 ) (./requirements.tex [3]
 (./engineering_requirements.tex)) (./standards.tex (./engineering_standards.tex
 [4 <./objective_tree.png>])) (./functional_decomposition.tex
-<Level0.png, id=128, 445.665pt x 191.71625pt>
+<Level0.png, id=128, 1782.66pt x 766.865pt>
 File: Level0.png Graphic file (type png)
 <use Level0.png>
 Package pdftex.def Info: Level0.png  used on input line 6.
-(pdftex.def)             Requested size: 328.82707pt x 141.45532pt.
+(pdftex.def)             Requested size: 328.82707pt x 141.44655pt.
 <Level_1.png, id=129, 699.61375pt x 502.87875pt>
 File: Level_1.png Graphic file (type png)
 <use Level_1.png>
 Package pdftex.def Info: Level_1.png  used on input line 14.
 (pdftex.def)             Requested size: 469.75502pt x 337.66365pt.
  [5 <./Level0.png>]
-<Level2_power.png, id=137, 500.87125pt x 505.89pt>
+<Level2_power.png, id=137, 2003.485pt x 2023.56pt>
 File: Level2_power.png Graphic file (type png)
 <use Level2_power.png>
 Package pdftex.def Info: Level2_power.png  used on input line 22.
-(pdftex.def)             Requested size: 399.29463pt x 403.31535pt.
+(pdftex.def)             Requested size: 399.29463pt x 403.28448pt.
 [6 <./Level_1.png>]
-<Level2_logic_ui_ux.png, id=144, 520.94624pt x 505.89pt>
+<Level2_logic_ui_ux.png, id=144, 2083.785pt x 2023.56pt>
 File: Level2_logic_ui_ux.png Graphic file (type png)
 <use Level2_logic_ui_ux.png>
 Package pdftex.def Info: Level2_logic_ui_ux.png  used on input line 30.
-(pdftex.def)             Requested size: 469.75502pt x 456.1845pt.
+(pdftex.def)             Requested size: 469.75502pt x 456.17679pt.
  [7 <./Level2_power.png>]
-<Level2_xy_movement.png, id=153, 831.105pt x 558.085pt>
+<Level2_xy_movement.png, id=153, 3324.42pt x 2232.34pt>
 File: Level2_xy_movement.png Graphic file (type png)
 <use Level2_xy_movement.png>
 Package pdftex.def Info: Level2_xy_movement.png  used on input line 38.
-(pdftex.def)             Requested size: 469.75502pt x 315.43784pt.
+(pdftex.def)             Requested size: 469.75502pt x 315.4208pt.
  [8 <./Level2_logic_ui_ux.png>])
 (./project_update.tex) (./references.tex [9 <./Level2_xy_movement.png>])
 [10] (./main.aux)
@@ -569,7 +569,7 @@ are/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/tex
 live/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-di
 st/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on main.pdf (10 pages, 284008 bytes).
+Output written on main.pdf (10 pages, 1704026 bytes).
 PDF statistics:
  225 PDF objects out of 1000 (max. 8388607)
  185 compressed objects within 2 object streams
