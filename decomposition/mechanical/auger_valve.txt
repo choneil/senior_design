@@ -1,0 +1,19 @@
+cartridge body:
+	main body of cartridge
+	needle
+	auger screw
+	
+solder tube:
+	removable airtight lid w/ pressure input valve
+	solder paste
+	paste output nozzle interfaces with main body of cartridge
+
+needle:
+	appropriately sized for selected paste
+	threaded ring to to secure needle to cartridge body
+	
+auger screw:
+	straight piece of metal less the channel mapped to a spiral along the z axis
+	plus sealed bearing
+	plus stepper interface
+	plus seal to needle inlet

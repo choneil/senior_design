@@ -1,0 +1,18 @@
+limit switch control
+	pushbutton[0:1]
+		0: the component which is monitored by this limit switch is not at the place we are monitoring
+		1: the component is at known position while pushbutton is in this state
+
+locations:
+	x axis
+		solder gantry resting
+		component gantry resting
+	solder gantry
+		y1 = 0
+		y1 = y1_max **define y1 max**
+		z1 = 0
+	component gantry
+		y2 = 0
+		y2 = y2_max **define y2 max**
+		z2 = 0
+

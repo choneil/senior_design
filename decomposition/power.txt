@@ -1,0 +1,25 @@
+motor:
+	x rail movement
+		**LOCATE** x axis motor spec from artillery sidewinder x2
+	
+	solder gantry
+		**CREATE** auger valve air pressure delivery plan
+		y1 stepper motor - **motor_spec** 5-17HE15-1504S **LINK SPEC** **needs torque verified**
+		z1 stepper motor - **motor_spec** 5-17HE15-1504S **LINK SPEC** **needs torque verified** 
+		e1 stepper motor - **motor_spec** 5-17HE15-1504S **LINK SPEC** **needs torque verified**
+		
+	component gantry
+		**CREATE** vacuum pump control plan
+		**LOCATE** vacuum pump motor spec **motor_spec_est** 12VDC 
+		y2 stepper motor - **motor_spec** 5-17HE15-1504S **LINK SPEC** **needs torque verified**
+		z2 stepper motor - **motor_spec** 5-17HE15-1504S **LINK SPEC** **needs torque verified**	
+
+logic:
+	**current_to_change** rambov1.2 logic asks for 12VDC
+	**CREATE**  5VDC schematic for raspberry pi, idc pull it from a lemon in gatorade
+		probably do the display from here too
+
+heat:
+	**CREATE** full bed heating plan
+
+

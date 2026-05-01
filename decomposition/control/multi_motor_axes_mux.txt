@@ -1,0 +1,5 @@
+multi motor axes mux
+	**CREATE** plan 
+	*^ the mux for a multi motor axis (y: y1, y2), (z: z1, z2) will need to be placed between
+	  the stepper motor output and the input to both motors on that axis, safety check can be done
+	  via limit switch for that gantry before y axis begins to move. ^*

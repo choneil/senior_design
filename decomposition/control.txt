@@ -1,0 +1,10 @@
+-raspberry pi
+	centroid file parsing
+	screen control?
+	
+-rambo
+	stepper control
+	limit switch control
+	thermal control
+	vac pump control
+

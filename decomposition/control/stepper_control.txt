@@ -1,0 +1,34 @@
+stepper control:
+	4 pin stepper output from rambo
+	4 pin stepper motor input
+	**LINK PINOUT** 
+	4 pin stepper 2 coils, 2 pins per coil, each pin is either positive or negative of its coil
+	moving charge creates an orthogonal magnetic field
+	flip the current flip the magnetic field direction
+
+	*^axes of movement separate definition for torque transfer: x and y axes are large scale movements controlled
+	  via drive belts, precision for drive belts needs to be reviewed^*
+
+	*^axes of movement separate definition for boundaries: x axis is large scale movement
+	  bounded by:
+		x-axis interface -x as it meets solder gantry at its respective resting place
+		x-axis interface +x as it meets component gantry at its respective resting place^*
+	
+	*^axes of movement separate definition for boundaries: y axis is large scale movement
+	  bounded by:
+		y-axis limits for each respective gantry^*
+
+	*^axes of movement boundaries (xy movement) solder gantry: 
+	  xy movement for solder gantry is between:
+		 solder toolhead resting place
+		 Z-axis normal to the pad at which solder is being placed^*
+
+	*^axes of movement boundaries (xy movement component gantry:
+	  xy movement for component gantry is between:
+		component toolhead resting place
+		center of current component to be picked as it is fed by component feeder
+		Z-axis normal to center of component on board as defined by 2 axis weighted average (?) of pins for component^*
+
+	
+
+	**LINK MARLIN STEPPER MOTOR CONTROL LOGIC** 

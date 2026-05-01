@@ -1,0 +1,16 @@
+y1 motor:
+	stepper control(1)
+	y motor mux[0:1]
+
+z1 motor:
+	stepper control(1)
+	z motor mux[0:1]
+
+limit switches:
+	limit switch monitoring(2)
+
+auger valve:
+	cartridge body
+	solder paste tube
+	e motor
+

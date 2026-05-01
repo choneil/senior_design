@@ -1,0 +1,28 @@
+-solder gantry
+	auger valve
+	y1 motor
+	z1 motor
+	e1 motor
+	limit switches
+	gantry interface receiver 1
+
+-component gantry
+	vac head
+	y2 motor
+	z2 motor
+	limit switches
+	gantry interface receiver 2
+
+-component feed
+	strips
+	strip feeding mechanism
+	strip waste handling
+	
+-gantry interface
+	x motor
+	gantry switching
+	gantry interface 1 and 2
+
+-bed
+	board positioning
+	thermal planning

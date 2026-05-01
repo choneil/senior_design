@@ -1,0 +1,14 @@
+tube:
+	vacuum pump motor connection
+	vacuum toolhead connection
+
+vacuum pump motor:
+	vacuum pump motor 12vdc
+	vacuum pump motor control (3)
+
+housing:
+	vacuum pump motor control housing
+
+vacuum pump rotation:
+	**LINK PROPOSALS** movement
+	**LINK PROPOSALS** feedback
