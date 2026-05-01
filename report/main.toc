@@ -9,7 +9,7 @@
 \contentsline {section}{\numberline {5}Engineering Standards}{5}{section.5}%
 \contentsline {section}{\numberline {6}Functional Decomposition}{5}{section.6}%
 \contentsline {subsection}{\numberline {6.1}Level 0 --- System Overview}{5}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Level 1 --- Functional Modules}{6}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.2}Level 1 Decomposition}{6}{subsection.6.2}%
 \contentsline {subsection}{\numberline {6.3}Level 2 --- Power}{7}{subsection.6.3}%
 \contentsline {subsection}{\numberline {6.4}Level 2 --- Logic \& UI/UX}{8}{subsection.6.4}%
 \contentsline {subsection}{\numberline {6.5}Level 2 --- XY Movement}{9}{subsection.6.5}%
