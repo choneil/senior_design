@@ -10,5 +10,9 @@ housing:
 	vacuum pump motor control housing
 
 vacuum pump rotation:
-	**LINK PROPOSALS** movement
-	**LINK PROPOSALS** feedback
+	Z-axis stepper motor interacting with rack and pinion style hardware
+		Hollow-Shaft Stepper 
+			Juki Tip
+			Juki Tip Coupler
+			Hose Coupler
+			Hose
