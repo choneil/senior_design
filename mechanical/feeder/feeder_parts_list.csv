@@ -1,33 +1,33 @@
-﻿,part #,part name,size,model,source,price,count,total
-Housing,,,,,,,,
-,1,Printed Plastic Parts,,,in-house,free,,
-Electrical Components,,,,,,,,
-,2,N20 Motor,,,,,,
-,3,towerPro sg90,,,,,,
-,4,microswitch,,,,,,
-Mechanical Hardware,,,,,,,,
-,5,"pin, 2mmx13mm",,,,,,
-,6,Screw - Hex Socket Head,M3x6,ELDC-J9D-M3-L6,JLC,0.0071,7,0.0497
-,,or,M3x8,ELDC-J9D-M3-L8,"""",0.0136,7,0.0952
-,,or,M3x10,ELDC-J9D-M3-L10,"""",0.0099,7,0.0693
-,7,Screw - Hex Socket Head,M2x10,EDLA-J9-M2-L10,JLC,0.0053,4,0.0212
-,8,Screw - Hex Socket Head,M3x12,EDLA-S1-M3-L12,JLC,0.0101,1,0.0101
-,9,Screw - Hex Socket Head,M3x6,ELDC-J9D-M3-L6,JLC,0.0071,7,0.0497
-,10,Screw - Hex Socket Head,M2x8,EDLA-J9-M2-L8,JLC,0.015,2,0.03
-,11,Screw - Hex Socket Head,M3x16,EDLA-J9-M3-L16,JLC,0.0093,1,0.0093
-,12,Screw - Countersunk Phillips Head,M1.6x4,EDLW-CE1-M1.6-L4,JLC,0.0009,2,0.0018
-,13,Bearing - 683ZZ,3x7x3mm,683ZZ,JLC,0.1971,1,0.1971
-,14,Spring - pull,"8x31mm, c=0.2N/mm",ATHP-E1-PG1-D3-L30,JLC,0.1116,1,0.1116
-,14a,Screw - Flathead Hex Socket,M3x6,ELSW-S1W-M3-L6,JLC,0.0063,2,0.0126
-,15,Spring - Compression,"7x12mm, c=0.66N/mm*",,,,,
-,15a,Screw - Flathead Hex Socket,M3x20,ELSW-S1W-M3-L20,JLC,0.0134,1,0.0134
-,16,Spring - Compression,"7x20mm, c=1.5N/mm*",,,,,
-,16a,Screw - Flathead Hex Socket,M3x20,ELSW-S1W-M3-L20,JLC,0.0134,1,0.0134
-,17,Washer,M3x0.8,EPDA-JD-K-3,JLC,0.0042,6,0.0252
-Wiring,,,,,,,,
-,18,Connector - 3 Pin Dupont Female Header,Microswitch to Feeder PCB,,,,,
-,19,Connector - 2 Pin Dupont Female Header,N20 to Feeder PCB,,,,,
-,20,Connector - 4 Pin Dupont Female ,Feeder PCB to Controller,,,,,
-,,,,,,,Total,0.7096
-,,Notes:,*There are some very similar springs available through JLC; the design seems like it would accomodate those.,,,,,
-,,,This list was compiled using the mgrl list as reference --->,MGRL List,,,,
+﻿,part #,part name,size,model,source,price,count,total,,,
+Housing,,,,,,,,,,,
+,1,Printed Plastic Parts,,,in-house,free,,,,,
+Electrical Components,,,,,,,,,,,
+,2,N20 Motor,,,,,,,,,
+,3,towerPro sg90,,,,,,,,,
+,4,microswitch,,,,,,,,,
+Mechanical Hardware,,,,,,,,,,,
+,5,"pin, 2mmx13mm",,,,,,,,,
+,6,Screw - Hex Socket Head,M3x6,ELDC-J9D-M3-L6,[JLC](https://jlcmc.com/product/s/E02/ELDC/din-912-hex-socket-cap-screw),0.0071,7,0.0497,,,
+,,or,M3x8,ELDC-J9D-M3-L8,"[""]()",0.0136,7,0.0952,,,
+,,or,M3x10,ELDC-J9D-M3-L10,"[""]()",0.0099,7,0.0693,,,
+,7,Screw - Hex Socket Head,M2x10,EDLA-J9-M2-L10,[JLC](https://jlcmc.com/product/s/E02/EDLA/din-912-gb-t-70.1-standard-socket-head-cap-screws-full---half-thread),0.0053,4,0.0212,,,
+,8,Screw - Hex Socket Head,M3x12,EDLA-S1-M3-L12,[JLC](https://jlcmc.com/product/s/E02/ELDC/din-912-hex-socket-cap-screw),0.0101,1,0.0101,,,
+,9,Screw - Hex Socket Head,M3x6,ELDC-J9D-M3-L6,[JLC](https://jlcmc.com/product/s/E02/ELDC/din-912-hex-socket-cap-screw),0.0071,7,0.0497,,,
+,10,Screw - Hex Socket Head,M2x8,EDLA-J9-M2-L8,[JLC](),0.015,2,0.03,,,
+,11,Screw - Hex Socket Head,M3x16,EDLA-J9-M3-L16,[JLC](https://jlcmc.com/product/s/E02/EDLA/din-912-gb-t-70.1-standard-socket-head-cap-screws-full---half-thread),0.0093,1,0.0093,,,
+,12,Screw - Countersunk Phillips Head,M1.6x4,EDLW-CE1-M1.6-L4,[JLC](https://jlcmc.com/product/s/E02/EDLW/gb-t-819-phillips-countersunk-head-screw),0.0009,2,0.0018,,,
+,13,Bearing - 683ZZ,3x7x3mm,683ZZ,[JLC](https://jlcmc.com/product/b/C15/BR8364/deep-groove-ball-bearing-double-side-with-dust-cover?k=683ZZ&productModelNumber=683ZZ),0.1971,1,0.1971,,,
+,14,Spring - pull,"8x31mm, c=0.2N/mm",ATHP-E1-PG1-D3-L30,[JLC](https://jlcmc.com/product/s/A04/ATHP/extension-springs-light-load-type),0.1116,1,0.1116,,,
+,14a,Screw - Flathead Hex Socket,M3x6,ELSW-S1W-M3-L6,[JLC](https://jlcmc.com/product/s/E02/ELSW/flat-head-hex-socket-screw),0.0063,2,0.0126,,,
+,15,Spring - Compression,"7x12mm, c=0.66N/mm*",,[](),,,,,,
+,15a,Screw - Flathead Hex Socket,M3x20,ELSW-S1W-M3-L20,[JLC](https://jlcmc.com/product/s/E02/ELSW/flat-head-hex-socket-screw),0.0134,1,0.0134,,,
+,16,Spring - Compression,"7x20mm, c=1.5N/mm*",,[](),,,,,,
+,16a,Screw - Flathead Hex Socket,M3x20,ELSW-S1W-M3-L20,[JLC](https://jlcmc.com/product/s/E02/ELSW/flat-head-hex-socket-screw),0.0134,1,0.0134,,,
+,17,Washer,M3x0.8,EPDA-JD-K-3,[JLC](https://jlcmc.com/product/s/E06/EPDA/flat-washer-level-a),0.0042,6,0.0252,,,
+Wiring,,,,,,,,,,,
+,18,Connector - 3 Pin Dupont Female Header,Microswitch to Feeder PCB,,,,,,,,
+,19,Connector - 2 Pin Dupont Female Header,N20 to Feeder PCB,,,,,,,,
+,20,Connector - 4 Pin Dupont Female ,Feeder PCB to Controller,,,,,,,,
+,,,,,,,Total,0.7096,,,
+,,Notes:,*There are some very similar springs available through JLC; the design seems like it would accomodate those.,,,,,,,,
+,,,This list was compiled using the mgrl list as reference --->,MGRL List,,,,,,,
