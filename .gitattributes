@@ -1,0 +1,12 @@
+*.SLDPRT binary
+*.SLDASM binary
+*.STEP binary
+*.step binary
+*.STL binary
+*.stl binary
+*.glb binary
+*.dae binary
+*.pdf binary
+*.SLDDRW binary
+*.SLDBLK binary
+*.sldnotestl binary
