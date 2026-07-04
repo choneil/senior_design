@@ -1,0 +1,229 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="URDF">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.736100527943838 0.990296878771546 1.689853188698" rpy="0 0 0" />
+      <mass value="1.07934329151757" />
+      <inertia ixx="0.00687873990218512" ixy="6.41795296555564E-07" ixz="1.39677003916482E-11" iyy="0.0114579938453176" iyz="1.38878283620979E-07" izz="0.00487633746696742" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/base_link.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079633 -0 0" />
+      <geometry>
+        <mesh filename="meshes/foundation_and_slides.glb" />
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0.000899 -0.001201 0" rpy="1.57079633 -0 0" />
+      <geometry>
+        <mesh filename="meshes/pillow_block.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="Pillow_Blocks_for_Coupled_Shaft">
+    <inertial>
+      <origin xyz="0.691175187382051 0.937431602982899 -0.203600560790885" rpy="0 0 0" />
+      <mass value="0.154252911649049" />
+      <inertia ixx="3.57680921918208E-05" ixy="1.85657928707662E-06" ixz="-1.24425465019856E-09" iyy="3.12913773319299E-05" iyz="-2.13459885750732E-10" izz="5.89787711231075E-05" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Pillow_Blocks_for_Coupled_Shaft.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="2.13115555 1.96135109 0.53249934" rpy="-0.787915163 1.57079115 2.35871149" />
+      <geometry>
+        <mesh filename="meshes/pillow_blocks.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Fixed_Pillow_Blocks_Coupled_End" type="fixed">
+    <origin xyz="0.5325 -2.141 1.9506" rpy="-1.5708 -0.005034 1.5708" />
+    <parent link="base_link" />
+    <child link="Pillow_Blocks_for_Coupled_Shaft" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="Coupled_Shaft">
+    <inertial>
+      <origin xyz="4.50241970373355E-07 -2.49028777088434E-06 0.198194149607577" rpy="0 0 0" />
+      <mass value="0.0248179745681181" />
+      <inertia ixx="0.000256268089939498" ixy="-1.20548148814367E-10" ixz="1.365068893079E-09" iyy="0.000256268463787318" iyz="2.46803326220797E-10" izz="4.00654232575745E-07" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Coupled_Shaft.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-1.42965522 1.03700989 -0.536106858" rpy="1.89107242 -1.57078472 1.25057889" />
+      <geometry>
+        <mesh filename="meshes/shaft_coupled.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Revolute_Coupled_Shaft" type="continuous">
+    <origin xyz="0.7068 0.91707 -0.0035999" rpy="3.1416 0 -3.1365" />
+    <parent link="Pillow_Blocks_for_Coupled_Shaft" />
+    <child link="Coupled_Shaft" />
+    <axis xyz="0 0 1" />
+    <mimic joint="X_Motor_Pulley_Revolute" multiplier="1.0" offset="0" />
+  </joint>
+  <link name="Y_Axis">
+    <inertial>
+      <origin xyz="-0.112556205120491 0.0229688842480973 0.069417922763727" rpy="0 0 0" />
+      <mass value="0.548877585864391" />
+      <inertia ixx="0.000213650873393026" ixy="3.99905485273385E-06" ixz="4.62321281530466E-07" iyy="0.00265169225484896" iyz="-2.48734685709331E-09" izz="0.00264193085127518" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Y_Axis.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0.596094221 -1.03810853 1.61231869" rpy="-3.14158898 0.000192653679 3.14156841" />
+      <geometry>
+        <mesh filename="meshes/y-axis-assembly.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Y_Axis_Assembly_Linear" type="prismatic">
+    <origin xyz="0.59643 -1.6122 1.0381" rpy="1.5708 -2.4248E-05 -3.1414" />
+    <parent link="base_link" />
+    <child link="Y_Axis" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.3" upper="0.0" effort="10" velocity="0.5" />
+    <mimic joint="X_Motor_Pulley_Revolute" multiplier="0.00827606" offset="0" />
+  </joint>
+  <link name="Toolhead_Carriage">
+    <inertial>
+      <origin xyz="0.701892979246974 0.908970610305844 0.0558854223728729" rpy="0 0 0" />
+      <mass value="0.063095456123911" />
+      <inertia ixx="4.25826190957554E-05" ixy="6.9843597140151E-07" ixz="4.04006827032162E-09" iyy="8.6365591401213E-05" iyz="2.56809135071449E-07" izz="0.000128286688396118" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Toolhead_Carriage.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0.00553858563 -0.154190885 -1.49897871" rpy="1.43010057e-05 -0.000398070166 -0.0159684102" />
+      <geometry>
+        <mesh filename="meshes/toolhead_carriage.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Toolhead_Linear" type="prismatic">
+    <origin xyz="0.60379 -0.88401 0.11334" rpy="-3.1416 -0.00020556 3.1256" />
+    <parent link="Y_Axis" />
+    <child link="Toolhead_Carriage" />
+    <axis xyz="1 0 0" />
+    <limit lower="0.0" upper="0.1" effort="10" velocity="0.5" />
+    <mimic joint="Y_Motor_Pulley_Revolute" multiplier="0.00763944" offset="0" />
+  </joint>
+  <link name="Motor_And_Pillow_Block">
+    <inertial>
+      <origin xyz="0.827187963892279 0.895528431660119 -0.125822089792028" rpy="0 0 0" />
+      <mass value="0.192752368952067" />
+      <inertia ixx="6.4479246189603E-05" ixy="1.20107455187212E-11" ixz="3.60627552026881E-08" iyy="4.68903884340456E-05" iyz="1.63297554695799E-06" izz="4.29634944362609E-05" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Motor_And_Pillow_Block.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0.126933744 -1.0393615 0.905661597" rpy="-1.57548898 0.000281686898 -1.32186877e-06" />
+      <geometry>
+        <mesh filename="meshes/motor_mount_x.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Motor_And_Pillow_Block_Fixed" type="fixed">
+    <origin xyz="-0.12668 -1.0436 0.90081" rpy="-3.1369 0.00028169 0" />
+    <parent link="base_link" />
+    <child link="Motor_And_Pillow_Block" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="Shaft">
+    <inertial>
+      <origin xyz="-1.41356416865079E-05 -8.06688628718355E-06 -0.0323293928594652" rpy="0 0 0" />
+      <mass value="0.00570952595051918" />
+      <inertia ixx="1.26883605860732E-06" ixy="-9.61457847355612E-11" ixz="6.4006505279933E-10" iyy="1.26887146728837E-06" iyz="3.65267255042081E-10" izz="1.47510845184031E-07" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/Shaft.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-1.95639907 -1.02738024 0.849819631" rpy="1.58373121 1.57051092 1.57872077" />
+      <geometry>
+        <mesh filename="meshes/shaft.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Shaft_Revolute" type="continuous">
+    <origin xyz="0.977649 0.908181 -0.140656" rpy="-1.5708 0.0097031 1.5708" />
+    <parent link="Motor_And_Pillow_Block" />
+    <child link="Shaft" />
+    <axis xyz="0 0 1" />
+    <mimic joint="X_Motor_Pulley_Revolute" multiplier="-1.000000" offset="0" />
+  </joint>
+  <link name="X_Motor_Pulley">
+    <visual>
+      <origin xyz="-1.95656 -1.02739 0.587612" rpy="1.58373 1.57051 1.57872" />
+      <geometry>
+        <mesh filename="meshes/motor_pulley_x.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="X_Motor_Pulley_Revolute" type="revolute">
+    <origin xyz="0.714542 0.907144 -0.140661" rpy="-1.5708 0.0097031 1.5708" />
+    <parent link="Motor_And_Pillow_Block" />
+    <child link="X_Motor_Pulley" />
+    <axis xyz="0 0 -1" />
+    <limit lower="-36.249146" upper="0" effort="10" velocity="5" />
+  </joint>
+  <link name="Y_Motor_Pulley">
+    <visual>
+      <origin xyz="-0.5119 1.54277 -1.11409" rpy="1.5708 -0 0" />
+      <geometry>
+        <mesh filename="meshes/motor_pulley_y.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Y_Motor_Pulley_Revolute" type="revolute">
+    <origin xyz="0.0845185 0.0759882 0.069446" rpy="1.5708 0.000192654 3.14157" />
+    <parent link="Y_Axis" />
+    <child link="Y_Motor_Pulley" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="13.089969" effort="10" velocity="5" />
+  </joint>
+  <link name="Pulley_Y">
+    <visual>
+      <origin xyz="-0.9399 1.5426 -1.11427" rpy="1.5708 -0 0" />
+      <geometry>
+        <mesh filename="meshes/pulley_y.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Pulley_Y_Revolute" type="continuous">
+    <origin xyz="-0.343482 0.0761786 0.0695335" rpy="1.5708 0.000192654 3.14157" />
+    <parent link="Y_Axis" />
+    <child link="Pulley_Y" />
+    <axis xyz="0 0 1" />
+    <mimic joint="Y_Motor_Pulley_Revolute" multiplier="0.983197" offset="0" />
+  </joint>
+</robot>

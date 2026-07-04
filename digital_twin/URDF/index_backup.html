@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PnP URDF Viewer</title>
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; background:#1a1a1e; color:#ddd; overflow:hidden; }
+  #panel {
+    position:fixed; top:0; left:0; width:280px; max-height:100vh; overflow-y:auto;
+    background:rgba(25,25,30,0.92); padding:12px; box-sizing:border-box; z-index:10;
+  }
+  #panel h3 { margin:4px 0 10px; font-size:14px; }
+  .joint { margin-bottom:10px; }
+  .joint label { display:block; font-size:11px; margin-bottom:2px; color:#aaa; }
+  .joint input[type=range] { width:100%; }
+  .joint .val { color:#7fc97f; }
+  #log { font-size:11px; color:#e06060; white-space:pre-wrap; margin-top:10px; }
+  #status { font-size:12px; color:#888; margin-bottom:8px; }
+  button { margin:2px 2px 8px 0; font-size:11px; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h3>Pick &amp; Place</h3>
+  <div id="status">loading...</div>
+  <div id="live" style="font-size:12px;margin-bottom:8px;color:#e0a060;">serial: disconnected</div>
+  <div id="gcode-box" style="margin-bottom:10px;border-top:1px solid #333;padding-top:8px;">
+    <div style="font-size:11px;color:#aaa;margin-bottom:4px;">G-code</div>
+    <div style="display:flex;gap:4px;margin-bottom:4px;">
+      <input id="gcode-in" type="text" placeholder="G1 X10 F1000" autocomplete="off"
+             style="flex:1;font-family:monospace;font-size:12px;background:#111;color:#ddd;border:1px solid #444;padding:3px;">
+      <button id="gcode-send">Send</button>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+      <button data-gc="G92 X0 Y0 Z0">Set zero</button>
+      <button data-gc="M211 S0">Soft-limits off</button>
+      <button data-gc="M114">Where?</button>
+      <button id="estop" data-gc="M112" style="color:#e06060;">STOP</button>
+    </div>
+    <div id="gcode-log" style="font-family:monospace;font-size:10px;color:#7a7;max-height:80px;overflow-y:auto;white-space:pre-wrap;"></div>
+  </div>
+  <button id="homeBtn">Rest pose (zero)</button>
+  <button id="collBtn">Toggle collision (STL)</button>
+  <div id="joints"></div>
+  <div id="log"></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./libs/three.module.js",
+    "three/examples/jsm/": "./libs/examples/jsm/",
+    "urdf-loader": "./libs/urdf/URDFLoader.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import URDFLoader from 'urdf-loader';
+
+// ====================== CONFIG ======================
+const URDF_PATH = 'PickAndPlace_glb.urdf';   // relative to this html file
+// ====================================================
+
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+function logErr(msg) { logEl.textContent += msg + '\n'; console.error(msg); }
+
+// --- three.js scene ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1e);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.001, 100);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+dir.position.set(2, 4, 3);
+scene.add(dir);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
+dir2.position.set(-3, -2, -1);
+scene.add(dir2);
+scene.add(new THREE.GridHelper(4, 40, 0x333338, 0x28282c));
+scene.add(new THREE.AxesHelper(0.3));
+
+// --- URDF loading with explicit glb + stl support ---
+const manager = new THREE.LoadingManager();
+const loader = new URDFLoader(manager);
+loader.parseCollision = true;   // load collision (STL) too, hidden by default
+loader.loadMeshCb = (path, manager, material, onComplete) => {
+  const ext = path.split('.').pop().toLowerCase();
+  if (ext === 'glb' || ext === 'gltf') {
+    new GLTFLoader(manager).load(path,
+      g => onComplete(g.scene),
+      undefined,
+      e => { logErr(`FAILED glb: ${path}\n${e.message || e}`); onComplete(null, e); });
+  } else if (ext === 'stl') {
+    new STLLoader(manager).load(path,
+      geom => {
+        const mat = material || new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.7 });
+        onComplete(new THREE.Mesh(geom, mat));
+      },
+      undefined,
+      e => { logErr(`FAILED stl: ${path}\n${e.message || e}`); onComplete(null, e); });
+  } else {
+    logErr(`Unhandled mesh type: ${path}`);
+    onComplete(null, new Error('unhandled type'));
+  }
+};
+
+let robot = null;
+// Fires once every queued mesh has finished loading -> bounds are now real.
+manager.onLoad = () => {
+  if (!robot) return;
+  robot.updateMatrixWorld(true);
+  recenterOnGround(robot);
+  frameRobot(robot);
+};
+loader.load(URDF_PATH, r => {
+  robot = r;
+  // URDF is Z-up; three.js is Y-up
+  robot.rotation.x = -Math.PI / 2;   // URDF Z-up -> three.js Y-up
+  scene.add(robot);
+
+  // hide collision meshes initially
+  robot.traverse(o => { if (o.isURDFCollider) o.visible = false; });
+
+  buildJointUI(robot);
+  connectSerial(robot);
+  statusEl.textContent =
+    `links: ${Object.keys(robot.links).length}, joints: ${Object.keys(robot.joints).length}`;
+}, undefined, e => logErr(`FAILED urdf: ${e.message || e}`));
+
+function recenterOnGround(r) {
+  // measure world bounds of visual meshes only (anything under a collider is skipped)
+  const box = new THREE.Box3();
+  r.traverse(o => {
+    if (!o.isMesh) return;
+    let p = o, isColl = false;
+    while (p) { if (p.isURDFCollider) { isColl = true; break; } p = p.parent; }
+    if (!isColl) box.expandByObject(o);
+  });
+  if (box.isEmpty()) return;
+  const c = box.getCenter(new THREE.Vector3());
+  // shift so X,Z centered at 0 and min Y sits on ground plane (Y=0 in three.js = URDF Z=0 plane)
+  r.position.x -= c.x;
+  r.position.z -= c.z;
+  r.position.y -= box.min.y;
+  r.updateMatrixWorld(true);
+}
+
+function frameRobot(r) {
+  const box = new THREE.Box3().setFromObject(r);
+  if (box.isEmpty()) { camera.position.set(1,1,1); return; }
+  const c = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3()).length();
+  camera.position.copy(c).add(new THREE.Vector3(size*0.7, size*0.5, size*0.7));
+  controls.target.copy(c);
+  controls.update();
+  camera.near = size/1000; camera.far = size*100;
+  camera.updateProjectionMatrix();
+}
+
+// --- joint sliders ---
+function buildJointUI(r) {
+  const box = document.getElementById('joints');
+  box.innerHTML = '';
+  for (const [name, j] of Object.entries(r.joints)) {
+    if (j.jointType === 'fixed') continue;
+    if (j.mimicJoint) continue;  // driven joints get no slider
+    let lo = j.limit.lower, hi = j.limit.upper;
+    // fall back to +/-pi only when the joint has no usable limits
+    if (!(isFinite(lo) && isFinite(hi) && lo < hi)) { lo = -Math.PI; hi = Math.PI; }
+    const div = document.createElement('div');
+    div.className = 'joint';
+    const unit = j.jointType === 'prismatic' ? 'm' : 'rad';
+    const mid = (lo + hi) / 2;
+    j.setJointValue(mid);
+    div.innerHTML = `<label>${name} (${j.jointType}) <span class="val">${mid.toFixed(3)} ${unit}</span></label>
+      <input type="range" data-joint="${name}" min="${lo}" max="${hi}" step="${(hi-lo)/500}" value="${mid}">`;
+    const slider = div.querySelector('input');
+    const val = div.querySelector('.val');
+    slider.addEventListener('input', () => {
+      j.setJointValue(parseFloat(slider.value));
+      val.textContent = `${parseFloat(slider.value).toFixed(3)} ${unit}`;
+    });
+    box.appendChild(div);
+  }
+}
+
+document.getElementById('homeBtn').onclick = () => {
+  if (!robot) return;
+  for (const j of Object.values(robot.joints)) j.setJointValue(0);
+  document.querySelectorAll('#joints input').forEach(s => {
+    s.value = THREE.MathUtils.clamp(0, parseFloat(s.min), parseFloat(s.max));
+    s.dispatchEvent(new Event('input'));
+  });
+};
+
+let collVisible = false;
+document.getElementById('collBtn').onclick = () => {
+  if (!robot) return;
+  collVisible = !collVisible;
+  robot.traverse(o => { if (o.isURDFCollider) o.visible = collVisible; });
+};
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---- live serial link ----
+function connectSerial(robot) {
+  const liveEl = document.getElementById('live');
+  const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8765';
+  let ws;
+  function setLive(txt, color) { liveEl.textContent = 'serial: ' + txt; liveEl.style.color = color; }
+
+  const logEl = document.getElementById('gcode-log');
+  function gcodeLog(t) { logEl.textContent += t + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+  function sendGcode(line) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { gcodeLog('! not connected'); return; }
+    ws.send(JSON.stringify({ gcode: line }));
+    gcodeLog('> ' + line);
+  }
+  // wire UI once
+  const inEl = document.getElementById('gcode-in');
+  document.getElementById('gcode-send').onclick = () => { if (inEl.value.trim()) { sendGcode(inEl.value.trim()); inEl.value=''; } };
+  inEl.addEventListener('keydown', e => { if (e.key === 'Enter' && inEl.value.trim()) { sendGcode(inEl.value.trim()); inEl.value=''; } });
+  document.querySelectorAll('#gcode-box button[data-gc]').forEach(b => {
+    b.onclick = () => sendGcode(b.getAttribute('data-gc'));
+  });
+
+  function open() {
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => setLive('connected', '#7fc97f');
+    ws.onclose = () => { setLive('disconnected (retrying)', '#e06060'); setTimeout(open, 1500); };
+    ws.onerror = () => ws.close();
+    ws.onmessage = (ev) => {
+      let data; try { data = JSON.parse(ev.data); } catch { return; }
+      if (data.ack) { gcodeLog((data.ack.ok ? '  ok ' : '  ERR ') + data.ack.cmd); return; }
+      if (!data.joints) return;
+      for (const [name, val] of Object.entries(data.joints)) {
+        const j = robot.joints[name];
+        if (!j) continue;
+        j.setJointValue(val);
+        // keep the matching slider + label in sync if it exists
+        const s = document.querySelector(`input[data-joint="${name}"]`);
+        if (s) {
+          s.value = val;
+          const lab = s.parentElement.querySelector('.val');
+          const unit = j.jointType === 'prismatic' ? 'm' : 'rad';
+          if (lab) lab.textContent = val.toFixed(3) + ' ' + unit;
+        }
+      }
+    };
+  }
+  open();
+}
+
+(function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
+</script>
+</body>
+</html>
