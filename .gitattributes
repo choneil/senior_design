@@ -1,3 +1,4 @@
+#Solidworks files treated as binary
 *.SLDPRT binary
 *.SLDASM binary
 *.STEP binary
@@ -10,3 +11,13 @@
 *.SLDDRW binary
 *.SLDBLK binary
 *.sldnotestl binary
+
+#Altium files treated as binary
+*.PcbDoc binary
+*.SchDoc binary
+*.PcbLib binary
+*.SchLib binary
+*.IntLib binary
+*.BomDoc binary
+*.OutJob binary
+*.Harness binary
