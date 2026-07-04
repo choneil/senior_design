@@ -1,0 +1,11 @@
+*.swp
+*.un~
+*~
+~$*
+*.log
+__Previews/
+*.SchDocPreview
+History/
+Thumbs.db
+Desktop.ini
+.DS_Store
