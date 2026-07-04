@@ -115,7 +115,7 @@
       useEffect(() => {
         Promise.all(
           SCHEDULE_FILES.map(file =>
-            fetch(file)
+            fetch(new URL(file, document.baseURI))
               .then(res => {
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.text();
