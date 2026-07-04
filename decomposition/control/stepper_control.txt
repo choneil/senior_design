@@ -29,6 +29,7 @@ stepper control:
 		center of current component to be picked as it is fed by component feeder
 		Z-axis normal to center of component on board as defined by 2 axis weighted average (?) of pins for component^*
 
-	
+	*^axes of movement separate definition for torque transfer: z axis movement for the vacuum head
+		Vacuum head will be a through-hole stepper motor which is mounted on a plate articulated by a separate stepper motor.
 
 	**LINK MARLIN STEPPER MOTOR CONTROL LOGIC** 

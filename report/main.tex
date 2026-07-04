@@ -1,0 +1,54 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{ragged2e}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue, citecolor=black}
+
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\lhead{\textit{PCBA System --- Project Report}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+
+\title{\textbf{ECE404 Final Presentation Report} \\
+       \large Consumer-Scale PCB Pick-and-Place / Reflow System}
+\author{Group 3 \\
+        Ainaan Qureshi \\
+        Amara Coleman \\
+        Andy Brinker \\
+        Chuck O'Neill \\
+      }
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\input{needs_objective}
+\input{market_research}
+\input{objective_tree}
+\input{requirements}
+\input{standards}
+\input{functional_decomposition}
+\input{project_update}
+\input{references}
+
+\end{document}
