@@ -239,6 +239,7 @@ function connectSerial(robot) {
   const X_LEAD = 52.0;   // 26T GT2
   const Y_LEAD = 48.0;   // 24T GT2
   const ACCEL = 3000.0;  // mm/s^2, mirror of firmware M201
+  const E_LEAD = 0.5 * 19 / 32;  // plunger mm per E-gear rev
 
   function setLive(txt, color) { liveEl.textContent = 'serial: ' + txt; liveEl.style.color = color; }
   const logEl = document.getElementById('gcode-log');
@@ -246,18 +247,22 @@ function connectSerial(robot) {
 
   // ---------- local machine simulator ----------
   const sim = {
-    pos: { X: 0, Y: 0 },   // logical position, mm
+    pos: { X: 0, Y: 0, Z: 0, E: 0 },   // logical position, mm
     absolute: true,
     feed: 1000,            // mm/min
     queue: [],
     busy: false,
   };
 
-  function applyJoints(xmm, ymm) {
+  function applyJoints(xmm, ymm, emm, zmm) {
     const jx = robot.joints["X_Motor_Pulley_Revolute"];
     const jy = robot.joints["Y_Motor_Pulley_Revolute"];
+    const je = robot.joints["E_Gear_19T_Joint"];
+    const jz = robot.joints["Z_Mount_Prismatic"];
     if (jx) jx.setJointValue(xmm * (2 * Math.PI / X_LEAD));
     if (jy) jy.setJointValue(ymm * (2 * Math.PI / Y_LEAD));
+    if (je && emm !== undefined) je.setJointValue(emm * (2 * Math.PI / E_LEAD));
+    if (jz && zmm !== undefined) jz.setJointValue(zmm * 0.001);
   }
 
   function parseWords(line) {
@@ -290,7 +295,9 @@ function connectSerial(robot) {
       if (num === 92) {
         if (w.X !== undefined) sim.pos.X = w.X;
         if (w.Y !== undefined) sim.pos.Y = w.Y;
-        applyJoints(sim.pos.X, sim.pos.Y);
+        if (w.E !== undefined) sim.pos.E = w.E;
+        if (w.Z !== undefined) sim.pos.Z = w.Z;
+        applyJoints(sim.pos.X, sim.pos.Y, sim.pos.E, sim.pos.Z);
         done(); return;
       }
       if (num === 4) { setTimeout(done, (w.P || 0) + (w.S || 0) * 1000); return; }
@@ -299,6 +306,10 @@ function connectSerial(robot) {
         const sx = sim.pos.X, sy = sim.pos.Y;
         const tx = w.X !== undefined ? (sim.absolute ? w.X : sx + w.X) : sx;
         const ty = w.Y !== undefined ? (sim.absolute ? w.Y : sy + w.Y) : sy;
+        const se = sim.pos.E;
+        const te = w.E !== undefined ? (sim.absolute ? w.E : se + w.E) : se;
+        const sz = sim.pos.Z;
+        const tz = w.Z !== undefined ? (sim.absolute ? w.Z : sz + w.Z) : sz;
 
         let pathFn, length;
         if (num <= 1) {                                  // straight
@@ -320,7 +331,21 @@ function connectSerial(robot) {
           };
         }
 
-        if (!isFinite(length) || length < 1e-6) { sim.pos.X = tx; sim.pos.Y = ty; applyJoints(tx, ty); done(); return; }
+        if (!isFinite(length) || length < 1e-6) {
+          const dEZ = Math.max(Math.abs(te - se), Math.abs(tz - sz));
+          if (dEZ > 1e-9) {          // E/Z-only move (dispense or plunge in place)
+            const eT = dEZ / Math.max(sim.feed / 60.0, 0.1) * 1000;
+            const e0 = performance.now();
+            (function estep(){
+              const f = Math.min((performance.now() - e0) / eT, 1);
+              applyJoints(sim.pos.X, sim.pos.Y, se + (te - se) * f, sz + (tz - sz) * f);
+              if (f < 1) requestAnimationFrame(estep);
+              else { sim.pos.E = te; sim.pos.Z = tz; done(); }
+            })();
+            return;
+          }
+          sim.pos.X = tx; sim.pos.Y = ty; applyJoints(tx, ty, sim.pos.E, sim.pos.Z); done(); return;
+        }
 
         // trapezoidal profile along path length
         const vMax = Math.max(sim.feed / 60.0, 0.1);
@@ -336,7 +361,7 @@ function connectSerial(robot) {
         const t0 = performance.now();
         (function step() {
           const t = (performance.now() - t0) / 1000;
-          if (t >= totalT) { sim.pos.X = tx; sim.pos.Y = ty; applyJoints(tx, ty); done(); return; }
+          if (t >= totalT) { sim.pos.X = tx; sim.pos.Y = ty; sim.pos.E = te; sim.pos.Z = tz; applyJoints(tx, ty, te, tz); done(); return; }
           let s;
           if (cruiseT === 0) {
             const th = totalT / 2;
@@ -347,8 +372,9 @@ function connectSerial(robot) {
             else if (t <= tA + cruiseT) s = dA_ + vMax * (t - tA);
             else { const td = totalT - t; s = length - 0.5 * ACCEL * td * td; }
           }
-          const [x, y] = pathFn(Math.min(Math.max(s, 0), length));
-          applyJoints(x, y);
+          const sc = Math.min(Math.max(s, 0), length);
+          const [x, y] = pathFn(sc);
+          applyJoints(x, y, se + (te - se) * (sc / length), sz + (tz - sz) * (sc / length));
           requestAnimationFrame(step);
         })();
         return;
@@ -396,6 +422,8 @@ function connectSerial(robot) {
         j.setJointValue(val);
         if (name === "X_Motor_Pulley_Revolute") sim.pos.X = val * (X_LEAD / (2 * Math.PI));
         if (name === "Y_Motor_Pulley_Revolute") sim.pos.Y = val * (Y_LEAD / (2 * Math.PI));
+        if (name === "E_Gear_19T_Joint") sim.pos.E = val * (E_LEAD / (2 * Math.PI));
+        if (name === "Z_Mount_Prismatic") sim.pos.Z = val * 1000;
         const s = document.querySelector(`input[data-joint="${name}"]`);
         if (s) {
           s.value = val;

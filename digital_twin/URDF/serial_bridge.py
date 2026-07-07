@@ -39,10 +39,14 @@ Y_LEAD_MM = 48.0
 
 # Marlin axis letter -> (URDF master joint name, rad per mm, invert?)
 # 'invert' flips sign if the twin moves opposite the real machine (fix visually).
+E_MM_PER_GEAR_REV = 0.5 * 19 / 32     # plunger mm per E-gear rev (0.5mm pitch, 19T:32T)
+
 AXIS_MAP = {
     "X": {"joint": "X_Motor_Pulley_Revolute", "rad_per_mm": 2 * math.pi / X_LEAD_MM, "invert": False},
     "Y": {"joint": "Y_Motor_Pulley_Revolute", "rad_per_mm": 2 * math.pi / Y_LEAD_MM, "invert": False},
-    # "Z": {...}  # add when you model a Z master
+    "E": {"joint": "E_Gear_19T_Joint", "rad_per_mm": 2 * math.pi / E_MM_PER_GEAR_REV, "invert": False},
+    # Z is a prismatic joint: value is METERS, so "rad_per_mm" is really m/mm here
+    "Z": {"joint": "Z_Mount_Prismatic", "rad_per_mm": 0.001, "invert": False},
 }
 
 # Marlin position line, e.g.:  X:12.00 Y:30.00 Z:5.00 E:0.00 Count X:960 ...

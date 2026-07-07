@@ -89,7 +89,7 @@
       </geometry>
     </collision>
     <visual>
-      <origin xyz="0.596094221 -1.03810853 1.61231869" rpy="-3.14158898 0.000192653679 3.14156841" />
+      <origin xyz="0.59597166 -1.0380281 1.72943367" rpy="-3.14158898 0.000192653679 3.14156841" />
       <geometry>
         <mesh filename="meshes/y-axis-assembly.glb" />
       </geometry>
@@ -116,7 +116,7 @@
       </geometry>
     </collision>
     <visual>
-      <origin xyz="0.00553858563 -0.154190885 -1.49897871" rpy="1.43010057e-05 -0.000398070166 -0.0159684102" />
+      <origin xyz="-0.0344729018 -0.177482913 -1.61599529" rpy="0.000172259839 -8.24170005e-05 0.0175302961" />
       <geometry>
         <mesh filename="meshes/toolhead_carriage.glb" />
       </geometry>
@@ -198,7 +198,7 @@
   </joint>
   <link name="Y_Motor_Pulley">
     <visual>
-      <origin xyz="-0.5119 1.54277 -1.11409" rpy="1.5708 -0 0" />
+      <origin xyz="-0.51179819 1.659885 -1.11401081" rpy="1.57079633 -1.59370252e-06 3.26993906e-10" />
       <geometry>
         <mesh filename="meshes/motor_pulley_y.glb" />
       </geometry>
@@ -213,7 +213,7 @@
   </joint>
   <link name="Pulley_Y">
     <visual>
-      <origin xyz="-0.9399 1.5426 -1.11427" rpy="1.5708 -0 0" />
+      <origin xyz="-0.93979867 1.65971505 -1.11419151" rpy="1.57079633 -1.59370252e-06 3.26993906e-10" />
       <geometry>
         <mesh filename="meshes/pulley_y.glb" />
       </geometry>
@@ -225,5 +225,115 @@
     <child link="Pulley_Y" />
     <axis xyz="0 0 1" />
     <mimic joint="Y_Motor_Pulley_Revolute" multiplier="0.983197" offset="0" />
+  </joint>
+  <link name="E_Gear_19T">
+    <visual>
+      <origin xyz="-0.670907069 1.73509774 -1.10347067" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/19T_Step_Gear.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="E_Gear_19T_Joint" type="revolute">
+    <origin xyz="0.638629285 -0.119117726 0.925436822" rpy="4.2107931e-09 -8.43876849e-12 -4.76052133e-14" />
+    <parent link="Z_Mount" />
+    <child link="E_Gear_19T" />
+    <axis xyz="-0.0334923839 -0.000171299189 0.999438958" />
+    <limit lower="0.000000" upper="634.932410" effort="10" velocity="5" />
+  </joint>
+  <link name="E_Nut_32T">
+    <visual>
+      <origin xyz="-0.696785823 1.73109011 -1.10605155" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/32T_Gear_with_Guide_Nut.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="E_Nut_32T_Joint" type="continuous">
+    <origin xyz="0.66450964 -0.119130097 0.928017702" rpy="4.2107931e-09 -8.43876849e-12 -4.76052133e-14" />
+    <parent link="Z_Mount" />
+    <child link="E_Nut_32T" />
+    <axis xyz="-0.0334923839 -0.000171299189 0.999438958" />
+    <mimic joint="E_Gear_19T_Joint" multiplier="-0.59375" offset="0" />
+  </joint>
+  <link name="E_Plunger">
+    <visual>
+      <origin xyz="-0.697587063 1.73110983 -1.08287769" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/Threaded_Rod_and_Plunger.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="E_Plunger_Joint" type="prismatic">
+    <origin xyz="0.66531088 -0.119149809 0.904843843" rpy="4.2107931e-09 -8.43876849e-12 -4.76052133e-14" />
+    <parent link="Z_Mount" />
+    <child link="E_Plunger" />
+    <axis xyz="-0.0334923839 -0.000171299189 0.999438958" />
+    <limit lower="0.000000" upper="0.030000" effort="10" velocity="5" />
+    <mimic joint="E_Gear_19T_Joint" multiplier="4.7249124e-05" offset="0" />
+  </joint>
+  <link name="E_Mount">
+    <visual>
+      <origin xyz="-0.677556267 1.7008806 -1.08244488" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/Extruder_Mount.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="E_Mount_Joint" type="fixed">
+    <origin xyz="0.645278483 -0.0849005779 0.904411032" rpy="4.2107931e-09 -8.43876849e-12 -4.76052133e-14" />
+    <parent link="Z_Mount" />
+    <child link="E_Mount" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="E_Body">
+    <visual>
+      <origin xyz="-0.676787746 1.73612378 -1.06390029" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/Extruder_Body.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="E_Body_Joint" type="fixed">
+    <origin xyz="0.644509962 -0.120143766 0.885866442" rpy="4.2107931e-09 -8.43876849e-12 -4.76052133e-14" />
+    <parent link="Z_Mount" />
+    <child link="E_Body" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="Z_Screw">
+    <visual>
+      <origin xyz="-0.679299684 1.70056385 -1.07004432" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/Threaded_Rod_and_Coupling.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Z_Screw_Joint" type="continuous">
+    <origin xyz="0.661149051 0.881564605 0.084854136" rpy="-1.57078203 -0.000398070166 -0.0159684102" />
+    <parent link="Toolhead_Carriage" />
+    <child link="Z_Screw" />
+    <axis xyz="-0.033906874 -0.000686628235 0.999424761" />
+    <mimic joint="Z_Mount_Prismatic" multiplier="3141.592654" offset="0" />
+  </joint>
+  <link name="Z_Mount" />
+  <joint name="Z_Mount_Prismatic" type="prismatic">
+    <origin xyz="0 0 0" rpy="-1.57078203 -0.000398070166 -0.0159684102" />
+    <parent link="Toolhead_Carriage" />
+    <child link="Z_Mount" />
+    <axis xyz="0.033906874 0.000686628235 -0.999424761" />
+    <limit lower="0" upper="0.029" effort="10" velocity="0.05" />
+  </joint>
+  <link name="Z_Pillow_Block">
+    <visual>
+      <origin xyz="-0.681274801 1.69560764 -1.01281522" rpy="1.57095704 -0.0334987016 0.000316086146" />
+      <geometry>
+        <mesh filename="meshes/Extruder/Z_Pillow_Block.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="Z_Pillow_Block_Joint" type="fixed">
+    <origin xyz="0.662212071 0.824311297 0.0798978936" rpy="-1.57078203 -0.000398070166 -0.0159684102" />
+    <parent link="Toolhead_Carriage" />
+    <child link="Z_Pillow_Block" />
   </joint>
 </robot>
