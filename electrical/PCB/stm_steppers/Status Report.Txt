@@ -1,0 +1,10 @@
+Output: Generates pick and place files
+Type  : Pick Place
+From  : Variant [[No Variations]] of Project [Free Documents]
+   Generated File[Pick Place for stm_steppers.txt]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 5:54:50 PM On 7/17/2026

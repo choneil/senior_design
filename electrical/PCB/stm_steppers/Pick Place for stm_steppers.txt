@@ -1,0 +1,112 @@
+Altium Designer Pick and Place Locations
+C:\Users\Comuter\senior_design\electrical\PCB\stm_steppers\Pick Place for stm_steppers.txt
+
+========================================================================================================================
+File Design Information:
+
+Date:       17/07/26
+Time:       17:54
+Revision:   Not in VersionControl
+Variant:    No variations
+Units used: mil
+
+Designator  Comment                             Layer       Footprint                       Center-X(mil) Center-Y(mil) Rotation Description                                                           
+U3_Driver1  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         1416.138      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+U3_Driver6  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         6416.137      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+U3_Driver4  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         4416.137      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+U3_Driver3  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         3416.137      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+R8_Driver6  25K                                 TopLayer    FP-MCR03-IPC_A                  6448.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R8_Driver3  25K                                 TopLayer    FP-MCR03-IPC_A                  3450.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R8_Driver1  25K                                 TopLayer    FP-MCR03-IPC_A                  1446.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R8_Driver5  25K                                 TopLayer    FP-MCR03-IPC_A                  5453.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R7_Driver6  .075                                TopLayer    RESC3216X70X50LL05T20           6318.000      4508.165      270      ""                                                                    
+R7_Driver3  .075                                TopLayer    RESC3216X70X50LL05T20           3317.000      4508.000      270      ""                                                                    
+R7_Driver4  .075                                TopLayer    RESC3216X70X50LL05T20           4317.000      4508.000      270      ""                                                                    
+R7_Driver5  .075                                TopLayer    RESC3216X70X50LL05T20           5317.000      4507.000      270      ""                                                                    
+R6_Driver3  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           3518.000      4508.000      270      ""                                                                    
+R6_Driver6  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           6517.000      4508.000      270      ""                                                                    
+R6_Driver5  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           5517.000      4508.000      270      ""                                                                    
+R6_Driver2  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           2518.000      4508.000      270      ""                                                                    
+J2_Driver1  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     1449.328      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+J2_Driver3  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     3450.008      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+J2_Driver5  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     5450.480      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+J2_Driver2  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     2447.953      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+C32_Driver1 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 1367.000      4094.000      270      None                                                                  
+C32_Driver6 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 6367.000      4094.000      270      None                                                                  
+C32_Driver4 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 4366.000      4094.000      270      None                                                                  
+C32_Driver3 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 3366.000      4094.000      270      None                                                                  
+C31_Driver6 .1uF                                TopLayer    CAPC1608X90X35NL15T15           6272.000      4133.000      0        ""                                                                    
+C31_Driver1 .1uF                                TopLayer    CAPC1608X90X35NL15T15           1272.000      4133.000      0        ""                                                                    
+C31_Driver3 .1uF                                TopLayer    CAPC1608X90X35NL15T15           3272.000      4133.000      0        ""                                                                    
+C31_Driver5 .1uF                                TopLayer    CAPC1608X90X35NL15T15           5272.000      4133.000      0        ""                                                                    
+C30_Driver4 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 2589.000      4170.000      0        None                                                                  
+C30_Driver2 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 3589.000      4170.000      0        None                                                                  
+C30_Driver3 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 4589.000      4170.000      0        None                                                                  
+C30_Driver1 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 1213.000      4336.000      180      None                                                                  
+C29_Driver4 .1uF                                TopLayer    CAPC1608X90X35NL15T15           4243.000      4214.000      90       ""                                                                    
+C29_Driver2 .1uF                                TopLayer    CAPC1608X90X35NL15T15           2243.000      4214.000      90       ""                                                                    
+C29_Driver3 .1uF                                TopLayer    CAPC1608X90X35NL15T15           3243.000      4214.000      90       ""                                                                    
+C29_Driver5 .1uF                                TopLayer    CAPC1608X90X35NL15T15           5243.000      4214.000      90       ""                                                                    
+C28_Driver6 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      5750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C28_Driver5 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      4750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C28_Driver4 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      2750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C28_Driver2 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      3750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C27_Driver1 .1uF                                TopLayer    CAPC1608X90X35NL15T15           1598.000      4170.000      0        ""                                                                    
+C27_Driver6 .1uF                                TopLayer    CAPC1608X90X35NL15T15           6589.000      4170.000      0        ""                                                                    
+C27_Driver5 .1uF                                TopLayer    CAPC1608X90X35NL15T15           3213.000      4336.000      180      ""                                                                    
+C27_Driver4 .1uF                                TopLayer    CAPC1608X90X35NL15T15           4213.000      4336.000      180      ""                                                                    
+U3_Driver2  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         2416.137      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+U3_Driver5  A4982_QFN-32_5x5_Pitch0.5mm         TopLayer    QFN50P500X500X80_HS-33N         5416.137      4308.000      0        "QFN 32 package for stepper driver a4982"                             
+R8_Driver4  25K                                 TopLayer    FP-MCR03-IPC_A                  4450.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R8_Driver2  25K                                 TopLayer    FP-MCR03-IPC_A                  2452.000      4094.000      270      "Thick Film Chip Resistor, 0603, 25kO, 5%, 200ppm/°C, 0.1W, 50V"      
+R7_Driver1  .075                                TopLayer    RESC3216X70X50LL05T20           1316.375      4508.000      270      ""                                                                    
+R7_Driver2  .075                                TopLayer    RESC3216X70X50LL05T20           2316.000      4508.000      270      ""                                                                    
+R6_Driver4  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           4517.000      4508.000      270      ""                                                                    
+R6_Driver1  ERJ8BWFR075V                        TopLayer    RESC3216X70X50LL05T20           1515.375      4508.000      270      ""                                                                    
+J2_Driver4  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     4449.008      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+J2_Driver6  B04B-ZESK-1D(T)(LF)(SN)(N)          TopLayer    FP-B04B-ZESK-1D_T_LF_SN-MFG     6450.008      4725.937      0        "CONN HEADER VERT 4POS 1.5MM"                                         
+C32_Driver2 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 2363.000      4094.000      270      None                                                                  
+C32_Driver5 .22uF                               TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 5366.924      4094.000      270      None                                                                  
+C31_Driver2 .1uF                                TopLayer    CAPC1608X90X35NL15T15           2272.000      4133.000      0        ""                                                                    
+C31_Driver4 .1uF                                TopLayer    CAPC1608X90X35NL15T15           4272.000      4133.000      0        ""                                                                    
+C30_Driver6 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 5589.000      4170.000      0        None                                                                  
+C30_Driver5 UMK107B7224KA-TR                    TopLayer    FP-0603-L_1_6_0_1-W_0_8_0-IPC_A 2213.000      4336.000      180      None                                                                  
+C29_Driver1 .1uF                                TopLayer    CAPC1608X90X35NL15T15           1243.000      4214.000      90       ""                                                                    
+C29_Driver6 .1uF                                TopLayer    CAPC1608X90X35NL15T15           6243.000      4214.000      90       ""                                                                    
+C28_Driver1 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      1750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C28_Driver3 EEEFT1C101AR                        TopLayer    FP-FTC-MFG                      6750.000      4289.000      90       "CAP ALUM 100UF 20% 16V SMD"                                          
+C27_Driver2 .1uF                                TopLayer    CAPC1608X90X35NL15T15           6213.000      4336.000      180      ""                                                                    
+C27_Driver3 .1uF                                TopLayer    CAPC1608X90X35NL15T15           5213.000      4336.000      180      ""                                                                    
+C25         "Capacitor 100 nF +/-10% 50 V 0603" TopLayer    CAPC1608X90X40NL10T20           4072.000      3439.000      180      "Chip Capacitor, 100 nF, +/- 10%, 50 V, 0603 (1608 Metric)"           
+C18         100n                                BottomLayer CAP_0402                        4069.000      3060.000      180      "Capacitor SMD 0402"                                                  
+C17         100n                                BottomLayer CAP_0402                        4005.000      3180.000      0        "Capacitor SMD 0402"                                                  
+C16         100n                                BottomLayer CAP_0402                        4069.000      3237.000      90       "Capacitor SMD 0402"                                                  
+C15         100n                                BottomLayer CAP_0402                        4183.000      3236.000      90       "Capacitor SMD 0402"                                                  
+X1          24MHz                               TopLayer    XTAL_3225                       3766.000      3145.000      0        "Crystal SMD 24MHz 10PPM 7pF 3225"                                    
+U1          STM32F407IGH6TR                     TopLayer    STM-UFBGA176+25_A_V             4145.669      3122.047      0        "MCU 32-bit ARM Cortex M4 RISC 1MB Flash 2.5V/3.3V 201-Pin UFBGA T/R" 
+U2          AD5206BRUZ100-RL7                   TopLayer    FP-RU-24-IPC_C                  4139.000      3664.000      90       "IC DGT POT 100KOHM 256TP 24TSSOP"                                    
+R3          10K                                 BottomLayer RES_0402                        4081.693      3173.228      0        "Resistor SMD 0402"                                                   
+R2          10K                                 BottomLayer RES_0402                        4005.000      3103.000      180      "Resistor SMD 0402"                                                   
+R1          0R                                  TopLayer    RES_0402                        3889.764      3120.365      0        "Resistor SMD 0402"                                                   
+R16         "3K3 5% 0603(1608)"                 TopLayer    RESC0603(1608)_N                3998.000      3470.000      90       "3K3 0.1W 5% 0603 (1608 Metric)  SMD"                                 
+FB1         FB0402                              BottomLayer FB_0402                         4017.716      2974.409      270      "Ferrite Bead SMD 0402"                                               
+C24         100n                                BottomLayer CAP_0402                        3951.575      3122.047      270      "Capacitor SMD 0402"                                                  
+C23         2.2u                                BottomLayer CAP_0402                        4209.000      3046.000      270      "Capacitor SMD 0402"                                                  
+C22         2.2u                                BottomLayer CAP_0402                        4262.000      3190.000      0        "Capacitor SMD 0402"                                                  
+C21         10p                                 TopLayer    CAP_0402                        3919.354      3184.791      270      "Capacitor SMD 0402"                                                  
+C20         10p                                 TopLayer    CAP_0402                        3644.000      3142.000      270      "Capacitor SMD 0402"                                                  
+C19         C0402                               BottomLayer CAP_0402                        3946.000      2919.000      0        "Capacitor SMD 0402"                                                  
+C14         100n                                BottomLayer CAP_0402                        4221.685      2986.000      180      "Capacitor SMD 0402"                                                  
+C13         100n                                BottomLayer CAP_0402                        4004.000      3140.000      0        "Capacitor SMD 0402"                                                  
+C12         100n                                BottomLayer CAP_0402                        4279.000      3070.685      90       "Capacitor SMD 0402"                                                  
+C11         100n                                BottomLayer CAP_0402                        4111.000      3236.315      90       "Capacitor SMD 0402"                                                  
+C10         100n                                BottomLayer CAP_0402                        4330.685      3120.000      180      "Capacitor SMD 0402"                                                  
+C9          100n                                BottomLayer CAP_0402                        4262.000      3133.780      0        "Capacitor SMD 0402"                                                  
+C8          100n                                BottomLayer CAP_0402                        4169.291      3012.992      270      "Capacitor SMD 0402"                                                  
+C7          100n                                BottomLayer CAP_0402                        4228.346      3096.457      0        "Capacitor SMD 0402"                                                  
+C6          100n                                BottomLayer CAP_0402                        3963.000      3228.000      90       "Capacitor SMD 0402"                                                  
+C5          100n                                BottomLayer CAP_0402                        4131.000      3011.000      270      "Capacitor SMD 0402"                                                  
+C4          100n                                BottomLayer CAP_0402                        4146.000      3235.685      90       "Capacitor SMD 0402"                                                  
+C3          4.7u                                BottomLayer CAP_0402                        3992.126      3045.276      0        "Capacitor SMD 0402"                                                  
+C2          10n                                 BottomLayer CAP_0402                        3947.438      2986.296      270      "Capacitor SMD 0402"                                                  
+C1          1u                                  BottomLayer CAP_0402                        3980.948      2988.173      270      "Capacitor SMD 0402"                                                  
