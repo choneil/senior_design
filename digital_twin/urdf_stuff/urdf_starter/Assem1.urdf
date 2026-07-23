@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot name="Assem1">
+  <link name="world" />
+  <joint name="world_to_base" type="fixed">
+    <parent link="world" />
+    <child link="base_link" />
+    <origin xyz="0 0 -1.030048276" rpy="0 0 0" />
+  </joint>
+  <link name="base_link">
+    <visual>
+      <origin xyz="0. 0. 0." rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/base_link.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="leadscrew_l">
+    <visual>
+      <origin xyz="-1.143765822 1.370819545 -1.114048276" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/leadscrew_l.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="leadscrew_r">
+    <visual>
+      <origin xyz="-0.585765822 1.370819545 -1.114048276" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/leadscrew_r.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="y_axis_assembly">
+    <visual>
+      <origin xyz="-0.585765822 1.289915359 -1.114048276" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/y_axis_assembly.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="toolhead_carriage">
+    <visual>
+      <origin xyz="-0.764915871 1.31224869 -1.206849775" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/toolhead_carriage.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="extruder_body">
+    <visual>
+      <origin xyz="-0.874465822 1.236849876 -1.166834225" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/extruder_body.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="z1_threaded_rod_and_coupling">
+    <visual>
+      <origin xyz="-0.874465822 1.236849876 -1.063849775" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/z1_threaded_rod_and_coupling.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="e1_guide_nut_and_gear_32">
+    <visual>
+      <origin xyz="-0.855805506 1.202254876 -1.157351725" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/e1_guide_nut_and_gear_32.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="e1_threaded_rod_and_plunger">
+    <visual>
+      <origin xyz="-0.855805506 1.202254876 -1.176647802" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/e1_threaded_rod_and_plunger.glb" /></geometry>
+    </visual>
+  </link>
+  <link name="e1_stepper_gear_19">
+    <visual>
+      <origin xyz="-0.881805506 1.202254876 -1.159131674" rpy="1.5707963 0 0" />
+      <geometry><mesh filename="meshes/glb/e1_stepper_gear_19.glb" /></geometry>
+    </visual>
+  </link>
+  <joint name="e1_stepper_gear_19_joint" type="continuous">
+    <origin xyz="0.007339684 0.034595 -0.00770255" rpy="0 0 0" />
+    <parent link="extruder_body" />
+    <child link="e1_stepper_gear_19" />
+    <axis xyz="0. 0. -1." />
+  </joint>
+  <joint name="e1_guide_nut_and_gear_32_joint" type="continuous">
+    <origin xyz="-0.018660316 0.034595 -0.0094825" rpy="0 0 0" />
+    <parent link="extruder_body" />
+    <child link="e1_guide_nut_and_gear_32" />
+    <axis xyz="0. 0. 1." />
+    <mimic joint="e1_stepper_gear_19_joint" multiplier="-0.59375" offset="0" />
+  </joint>
+  <joint name="e1_threaded_rod_and_plunger_joint" type="continuous">
+    <origin xyz="0. 0. 0.019296077" rpy="0 0 0" />
+    <parent link="e1_guide_nut_and_gear_32" />
+    <child link="e1_threaded_rod_and_plunger" />
+    <axis xyz="0. 0. 1." />
+    <mimic joint="e1_guide_nut_and_gear_32_joint" multiplier="1." offset="0" />
+  </joint>
+  <joint name="leadscrew_l_joint" type="continuous">
+    <origin xyz="1.143765822 -1.370819545 1.114048276" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="leadscrew_l" />
+    <axis xyz="0. 1. 0." />
+  </joint>
+  <joint name="leadscrew_r_joint" type="continuous">
+    <origin xyz="0.585765822 -1.370819545 1.114048276" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="leadscrew_r" />
+    <axis xyz="0. 1. 0." />
+    <mimic joint="leadscrew_l_joint" multiplier="-1." offset="0" />
+  </joint>
+  <joint name="y_axis_assembly_joint" type="prismatic">
+    <origin xyz="0.585765822 -1.289915359 1.114048276" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="y_axis_assembly" />
+    <axis xyz="0. 1. 0." />
+    <limit lower="-0.061520855" upper="0.269379145" effort="10" velocity="1" />
+    <mimic joint="leadscrew_l_joint" multiplier="0.00031831" offset="0" />
+  </joint>
+  <joint name="toolhead_carriage_joint" type="prismatic">
+    <origin xyz="0.179150048 -0.022333331 0.092801499" rpy="0 0 0" />
+    <parent link="y_axis_assembly" />
+    <child link="toolhead_carriage" />
+    <axis xyz="1. 0. 0." />
+    <limit lower="-0.1514" upper="0.2114" effort="10" velocity="1" />
+  </joint>
+  <joint name="extruder_body_joint" type="prismatic">
+    <origin xyz="0.109549952 0.075398814 -0.04001555" rpy="0 0 0" />
+    <parent link="toolhead_carriage" />
+    <child link="extruder_body" />
+    <axis xyz="0. 0. -1." />
+    <limit lower="-0.00151555" upper="0.04798445" effort="10" velocity="1" />
+    <mimic joint="z1_threaded_rod_and_coupling_joint" multiplier="0.00031831" offset="0" />
+  </joint>
+  <joint name="z1_threaded_rod_and_coupling_joint" type="continuous">
+    <origin xyz="0.109549952 0.075398814 -0.143" rpy="0 0 0" />
+    <parent link="toolhead_carriage" />
+    <child link="z1_threaded_rod_and_coupling" />
+    <axis xyz="0. 0. 1." />
+  </joint>
+</robot>

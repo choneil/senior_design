@@ -1,0 +1,328 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="Assem1">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.868352667578254 1.05898903789341 1.16352342034059" rpy="0 0 0" />
+      <mass value="1.53299233696365" />
+      <inertia ixx="0.00888871633932489" ixy="6.54616058110264E-08" ixz="-2.27783451098028E-07" iyy="0.0307978448545108" iyz="5.14701843456448E-06" izz="0.0223376908161357" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079633 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/base_link.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="left_pillow_block">
+    <inertial>
+      <origin xyz="0.585766321003453 0.0353607310615776 1.4098191438993" rpy="0 0 0" />
+      <mass value="0.0882641208491581" />
+      <inertia ixx="3.07620378481912E-05" ixy="7.7613351287486E-10" ixz="-8.14444263038735E-10" iyy="2.4111576800649E-05" iyz="-6.24121764317882E-10" izz="3.49514329945943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.558 -1.0585 3.8880876e-06" rpy="-3.6732051e-06 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/left_pillow_block.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/left pillow block.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pillow_block_L_static" type="prismatic">
+    <origin xyz="0.558 0 1.0585" rpy="1.5708 0 0" />
+    <parent link="base_link" />
+    <child link="left_pillow_block" />
+    <axis xyz="0 1 0" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="leadscrew_l">
+    <inertial>
+      <origin xyz="0.258602501787106 4.49776794314571E-05 -2.00616652201724E-05" rpy="0 0 0" />
+      <mass value="0.0753386843650939" />
+      <inertia ixx="2.32565577119641E-06" ixy="2.77913717590637E-10" ixz="7.61000029163675E-11" iyy="0.00092384424933684" iyz="-4.27005708569794E-10" izz="0.000923847393958268" />
+    </inertial>
+    <visual>
+      <origin xyz="-1.14377 -1.114 -1.41279611" rpy="-3.6732051e-06 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/leadscrew_l.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/glb/leadscrew_l.glb" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="leadscrew_l_rotation" type="continuous">
+    <origin xyz="0.58577 0.0555 1.4128" rpy="0 0 0" />
+    <parent link="left_pillow_block" />
+    <child link="leadscrew_l" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="x_movement">
+    <inertial>
+      <origin xyz="0.0302815689989748 -0.215938169534462 -0.0441396511811505" rpy="0 0 0" />
+      <mass value="0.333890297379534" />
+      <inertia ixx="0.00554458251534697" ixy="-1.97577385195446E-17" ixz="5.84186990418455E-07" iyy="0.000110435162786978" iyz="-3.6243647287197E-08" izz="0.00550678537470146" />
+    </inertial>
+    <visual>
+      <origin xyz="-1.19787 -1.113 -1.41379611" rpy="-3.6732051e-06 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/x_movement.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.827450980392157 0.666666666666667 0.129411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/x movement.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="x_axis_linear" type="prismatic">
+    <origin xyz="0.63987 0.0545000037 1.4138" rpy="-3.61744123e-22 -0 0" />
+    <parent link="left_pillow_block" />
+    <child link="x_movement" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.318" upper="0.031" effort="0" velocity="0" />
+  </joint>
+  <link name="y_rail">
+    <inertial>
+      <origin xyz="-5.58331159083991E-13 -0.000110264807158034 -2.24109619750834E-11" rpy="0 0 0" />
+      <mass value="0.103661148486152" />
+      <inertia ixx="3.66094436380346E-06" ixy="7.97023540785512E-14" ixz="6.93196606450724E-19" iyy="0.0025977601380798" iyz="-1.63387300253687E-21" izz="0.00259809511002258" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.806495515 1.34384062 1.2221109" rpy="-2.35619816 1.57079113 2.35619449" />
+      <geometry>
+        <mesh filename="meshes/glb/y_rail.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/y rail .STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="y_rail_static" type="fixed">
+    <origin xyz="0.024233 -0.3065 -0.069951" rpy="-1.5708 0 1.5708" />
+    <parent link="x_movement" />
+    <child link="y_rail" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="toolhead_carriage">
+    <inertial>
+      <origin xyz="-0.00277442320334542 0.0309942290903233 -0.00132923474893687" rpy="0 0 0" />
+      <mass value="0.314967107084397" />
+      <inertia ixx="0.000189090684542243" ixy="-3.55569341337465E-10" ixz="3.92296740078724E-08" iyy="0.0003134313279807" iyz="2.02279446182324E-05" izz="0.000269671639344761" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.806495515 -1.22211576 1.32416113" rpy="3.14158898 -7.34641021e-06 1.5708" />
+      <geometry>
+        <mesh filename="meshes/glb/toolhead_carriage.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/glb/toolhead_carriage.glb" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="toolhead_linear" type="prismatic">
+    <origin xyz="0 0.019675 0" rpy="-1.5708 0 0" />
+    <parent link="y_rail" />
+    <child link="toolhead_carriage" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.151" upper="0.208" effort="0" velocity="0" />
+  </joint>
+  <link name="z1">
+    <inertial>
+      <origin xyz="-0.0188642755380679 0.0399733046767312 -0.00187283223848034" rpy="0 0 0" />
+      <mass value="0.0917402851919872" />
+      <inertia ixx="2.91099922946181E-05" ixy="1.40270002725066E-07" ixz="2.84068037462018E-07" iyy="4.11402774159938E-05" iyz="2.85022132675072E-07" izz="3.23473040337209E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="1.38086023 1.25272856 -0.843699646" rpy="1.57079633 -3.67323209e-06 -1.57078898" />
+      <geometry>
+        <mesh filename="meshes/glb/z1.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.498039215686275 0.498039215686275 0.498039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/z1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="z1_linear" type="prismatic">
+    <origin xyz="0.0371999963 0.0306189927 -0.055696" rpy="3.1416 -1.5708 0" />
+    <parent link="toolhead_carriage" />
+    <child link="z1" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.016" upper="0.009" effort="0" velocity="0" />
+  </joint>
+  <link name="e1_stepper_gear">
+    <inertial>
+      <origin xyz="-0.00474997679076683 -0.0157918923827352 0.0311504097461397" rpy="0 0 0" />
+      <mass value="0.00150753052296752" />
+      <inertia ixx="4.34357654458276E-08" ixy="2.3245786908752E-14" ixz="-1.25254205918787E-13" iyy="4.34107056934144E-08" iyz="-1.58858450471333E-11" izz="6.31167558845983E-08" />
+    </inertial>
+    <visual>
+      <origin xyz="1.246985 0.881827312 -1.14530603" rpy="1.57079633 -3.67323209e-06 -1.57078898" />
+      <geometry>
+        <mesh filename="meshes/glb/e1_stepper_gear.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.447058823529412 0.474509803921569 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/e1 stepper gear.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="e1_stepper_rotation" type="continuous">
+    <origin xyz="0.132766701 0.37222367 0.319903589" rpy="0 0 0" />
+    <parent link="z1" />
+    <child link="e1_stepper_gear" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="e1_rod_gear">
+    <inertial>
+      <origin xyz="7.37762317741808E-05 2.38079148493497E-05 0.00703279420932375" rpy="0 0 0" />
+      <mass value="0.00347294505935546" />
+      <inertia ixx="2.3415460931349E-07" ixy="-3.54241595581534E-14" ixz="8.778836882488E-15" iyy="2.34154632025185E-07" iyz="-1.5961069969138E-13" izz="4.56580838521803E-07" />
+    </inertial>
+    <visual>
+      <origin xyz="1.24489372 0.854905222 -1.06820314" rpy="1.57079633 -3.67323209e-06 -1.57078898" />
+      <geometry>
+        <mesh filename="meshes/glb/e1_rod_gear.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.447058823529412 0.474509803921569 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.5105" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/e1 rod gear.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="e1_screw_gear_rotation" type="continuous">
+    <origin xyz="0.134966513 0.397823335 0.224503495" rpy="0 0 0" />
+    <parent link="z1" />
+    <child link="e1_rod_gear" />
+    <axis xyz="0 3.67323209e-06 1" />
+    <mimic joint="e1_stepper_rotation" multiplier="0.59375" />
+  </joint>
+  <link name="right_pillow_block">
+    <inertial>
+      <origin xyz="0.585766321035467 0.0353607310615198 1.40981914389929" rpy="0 0 0" />
+      <mass value="0.088264120849158" />
+      <inertia ixx="3.07620378481912E-05" ixy="7.7613351283864E-10" ixz="-8.14444263038945E-10" iyy="2.4111576800649E-05" iyz="-6.24121764304703E-10" izz="3.49514329945943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -1.0585 3.8880876e-06" rpy="-3.6732051e-06 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/right_pillow_block.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/right pillow block .STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pillow_block_r_static" type="fixed">
+    <origin xyz="0 0 1.0585" rpy="1.5708 0 0" />
+    <parent link="base_link" />
+    <child link="right_pillow_block" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="leadscrew_r">
+    <visual>
+      <origin xyz="-0.58577 -1.114 -1.41279611" rpy="-3.6732051e-06 -0 0" />
+      <geometry>
+        <mesh filename="meshes/glb/leadscrew_r.glb" />
+      </geometry>
+      <material name="">
+        <color rgba="0.251 0.251 0.251 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="leadscrew_r_rotation" type="continuous">
+    <origin xyz="0.58577 0.0555 1.4128" rpy="0 0 0" />
+    <parent link="right_pillow_block" />
+    <child link="leadscrew_r" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="z1_rod">
+    <visual>
+      <origin xyz="-0.876610845 1.28370033 -1.17956241" rpy="1.57079633 9.9132853e-17 -3.3398918e-15" />
+      <geometry>
+        <mesh filename="meshes/glb/z1_rod.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="z1" type="fixed">
+    <origin xyz="0.373068384 -0.345491176 0.0434715783" rpy="1.57079265 -7.34641021e-06 1.5708" />
+    <parent link="toolhead_carriage" />
+    <child link="z1_rod" />
+  </joint>
+  <link name="e1_threaded_rod">
+    <visual>
+      <origin xyz="0.189371065 -1.50001493 1.06819616" rpy="-1.57079388 -9.27089242e-07 0.72747796" />
+      <geometry>
+        <mesh filename="meshes/glb/e1_threaded_rod.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="e1_threaded_rod_Joint" type="prismatic">
+    <origin xyz="-0.00131890497 -0.00115866652 0.000" rpy="3.14158777 -1.81132073e-06 -0.84331102" />
+    <parent link="e1_rod_gear" />
+    <child link="e1_threaded_rod" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0.03" effort="10" velocity="1" />
+  </joint>
+</robot>
