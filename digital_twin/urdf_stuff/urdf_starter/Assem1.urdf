@@ -104,7 +104,7 @@
     <parent link="base_link" />
     <child link="y_axis_assembly" />
     <axis xyz="0. 1. 0." />
-    <limit lower="-0.061520855" upper="0.269379145" effort="10" velocity="1" />
+    <limit lower="-0.061520855" upper="0.7269379145" effort="10" velocity="1" />
     <mimic joint="leadscrew_l_joint" multiplier="0.00031831" offset="0" />
   </joint>
   <joint name="toolhead_carriage_joint" type="prismatic">
@@ -119,7 +119,7 @@
     <parent link="toolhead_carriage" />
     <child link="extruder_body" />
     <axis xyz="0. 0. -1." />
-    <limit lower="-0.00151555" upper="0.04798445" effort="10" velocity="1" />
+    <limit lower="-0.00151555" upper="0.4798445" effort="10" velocity="1" />
     <mimic joint="z1_threaded_rod_and_coupling_joint" multiplier="0.00031831" offset="0" />
   </joint>
   <joint name="z1_threaded_rod_and_coupling_joint" type="continuous">
