@@ -2,18 +2,32 @@
 """
 Serial -> WebSocket bridge for the Pick & Place digital twin.
 
-Reads Marlin position reports from the RAMBo over serial, converts each axis
-from millimeters to the corresponding URDF *master joint* angle (radians), and
+Reads Marlin position reports from the RAMBo v1.2 over serial, converts each
+axis from millimeters to the corresponding URDF *master joint* value, and
 broadcasts the joint state as JSON to any connected browser viewers.
+
+RAMBo v1.2 drive mapping (PickAndPlace.urdf master joints):
+    X : motor X (+ ext motor wired opposite) -> leadscrews, 8mm lead.
+        Sent as leadscrew_l_joint radians; leadscrew_r and the gantry follow
+        via URDF mimics.
+    Y : motor Y on a 20T GT2 belt -> toolhead_carriage_joint (prismatic, meters).
+        The Y pulleys follow via URDF mimics.
+    Z : motor Z on a 20T GT2 belt -> z1_joint (prismatic, meters). Z2 moves
+        opposite and the Z pulley turns via URDF mimics.
+    E : not in the URDF (the feeder runs on its own controller); ignored.
+
+The bridge sends MASTER joint values; the URDF mimics produce the visible
+linear travel. Bridge factors and URDF mimic multipliers compose to unity
+(e.g. 0.7854 rad/mm * 0.00127324 m/rad = 0.001 m/mm), so 1 real mm -> 1 twin mm.
 
 The viewer (index.html) connects to ws://localhost:8765 and applies the values.
 
-Install deps (into whatever Python you run this with):
+Install deps:
     pip install pyserial websockets
-
 Run:
-    python serial_bridge.py --port COM3            # Windows
-    python serial_bridge.py --port /dev/ttyACM0    # Linux
+    python serial_bridge.py --port /dev/tty.usbmodem*      # macOS
+    python serial_bridge.py --port COM3                    # Windows
+    python serial_bridge.py --port /dev/ttyACM0            # Linux
 """
 
 import argparse
@@ -28,25 +42,22 @@ import serial.tools.list_ports
 import websockets           # websockets
 
 # ----------------------------------------------------------------------------
-# Kinematics: mm of axis travel -> radians of the master pulley joint.
-# These MUST match the leads baked into the URDF mimics.
-#   X motor pulley drives the Y-assembly: 40 mm / rev  (GT2 20T)
-#   Y motor pulley drives the toolhead:   60 mm / rev  (GT2 30T)
-# rad_per_mm = 2*pi / lead_mm
+# Kinematics: Marlin mm -> URDF master joint value.
+#   Screws (X):    rad_per_mm = 2*pi / lead_mm = 0.785398 (8mm lead)
+#   Belts  (Y, Z): prismatic joints in METERS -> 0.001 m per mm
+# These MUST stay consistent with the mimic multipliers baked into
+# PickAndPlace.urdf (LEAD in ../sw2urdf/build_urdf.py).
 # ----------------------------------------------------------------------------
-X_LEAD_MM = 52.0
-Y_LEAD_MM = 48.0
+SCREW_LEAD_MM = 8.0
+SCREW_RAD_PER_MM = 2 * math.pi / SCREW_LEAD_MM            # 0.785398 rad/mm
 
-# Marlin axis letter -> (URDF master joint name, rad per mm, invert?)
-# 'invert' flips sign if the twin moves opposite the real machine (fix visually).
-E_MM_PER_GEAR_REV = 0.5 * 19 / 32     # plunger mm per E-gear rev (0.5mm pitch, 19T:32T)
-
+# Marlin axis letter -> (URDF master joint, factor per mm, invert?)
+# For prismatic joints the factor is METERS per mm (0.001); key name kept as
+# "rad_per_mm" for uniformity with the revolute axes.
 AXIS_MAP = {
-    "X": {"joint": "X_Motor_Pulley_Revolute", "rad_per_mm": 2 * math.pi / X_LEAD_MM, "invert": False},
-    "Y": {"joint": "Y_Motor_Pulley_Revolute", "rad_per_mm": 2 * math.pi / Y_LEAD_MM, "invert": False},
-    "E": {"joint": "E_Gear_19T_Joint", "rad_per_mm": 2 * math.pi / E_MM_PER_GEAR_REV, "invert": False},
-    # Z is a prismatic joint: value is METERS, so "rad_per_mm" is really m/mm here
-    "Z": {"joint": "Z_Mount_Prismatic", "rad_per_mm": 0.001, "invert": False},
+    "X": {"joint": "leadscrew_l_joint",       "rad_per_mm": SCREW_RAD_PER_MM, "invert": False},
+    "Y": {"joint": "toolhead_carriage_joint", "rad_per_mm": 0.001,            "invert": False},
+    "Z": {"joint": "z1_joint",                "rad_per_mm": 0.001,            "invert": False},
 }
 
 # Marlin position line, e.g.:  X:12.00 Y:30.00 Z:5.00 E:0.00 Count X:960 ...
@@ -55,13 +66,12 @@ POS_RE = re.compile(r"([XYZE]):(-?\d+\.?\d*)")
 # ----------------------------------------------------------------------------
 
 clients = set()
-latest_state = {}          # joint name -> radians (last known, sent to new clients)
+latest_state = {}          # joint name -> value (last known, sent to new clients)
 ser = None                 # shared serial handle, set once opened
 serial_lock = None         # asyncio.Lock created in main()
 
-# G-code we refuse to forward blindly. M112 (emergency stop) is allowed through;
-# everything else passes. This is a light guard, not a safety system.
-BLOCKED_PREFIXES = ()      # e.g. ('M303',) to block PID autotune; empty = allow all
+# G-code we refuse to forward blindly. Empty = allow all (M112 e-stop passes).
+BLOCKED_PREFIXES = ()
 
 
 def mm_to_joint(axis, mm):
@@ -73,15 +83,15 @@ def mm_to_joint(axis, mm):
 
 
 def parse_position(line):
-    """Return {joint: radians} for any axis letters found, else {}."""
+    """Return {joint: value} for any axis letters found, else {}."""
     if "X:" not in line and "Y:" not in line:
         return {}
     head = line.split("Count")[0]        # ignore stepper-count echo after 'Count'
     out = {}
     for axis, val in POS_RE.findall(head):
         if axis in AXIS_MAP:
-            joint, rad = mm_to_joint(axis, float(val))
-            out[joint] = rad
+            joint, v = mm_to_joint(axis, float(val))
+            out[joint] = v
     return out
 
 
@@ -110,7 +120,7 @@ async def ws_handler(websocket):
         if latest_state:
             await websocket.send(json.dumps({"joints": latest_state}))
         async for raw in websocket:
-            # inbound messages are JSON: {"gcode": "G1 X10 F1000"} or {"gcode": ["G92 X0 Y0", "M211 S0"]}
+            # inbound JSON: {"gcode": "G1 X10 F1000"} or {"gcode": ["G92 X0", "M211 S0"]}
             try:
                 data = json.loads(raw)
             except Exception:
@@ -160,12 +170,11 @@ async def serial_reader(port, baud, use_autoreport, poll_hz, loop):
     buf = b""
     last_poll = 0.0
     while True:
-        # optional polling fallback
         if not use_autoreport:
             now = loop.time()
             if now - last_poll >= 1.0 / poll_hz:
                 async with serial_lock:
-                  ser.write(b"M114\n")
+                    ser.write(b"M114\n")
                 last_poll = now
 
         data = await loop.run_in_executor(None, ser.read, 4096)
@@ -185,7 +194,7 @@ async def serial_reader(port, baud, use_autoreport, poll_hz, loop):
 
 async def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port", help="serial port (e.g. COM3 or /dev/ttyACM0)")
+    ap.add_argument("--port", help="serial port (e.g. COM3, /dev/ttyACM0, /dev/tty.usbmodemXXXX)")
     ap.add_argument("--baud", type=int, default=250000)
     ap.add_argument("--ws-port", type=int, default=8765)
     ap.add_argument("--poll", action="store_true",

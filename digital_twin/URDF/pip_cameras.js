@@ -37,7 +37,12 @@ export class PIPManager {
         this.container.addEventListener('mousedown', e => e.stopPropagation());
     }
 
-    createDraggableCard(title) {
+    // whole sidebar on/off (the toolbar's Cameras button)
+    setVisible(on) { this.container.style.display = on ? 'flex' : 'none'; }
+
+    // A card keeps its header (and its Show/Hide select) when hidden; only the body collapses.
+    // onToggle(on) runs whenever the card is shown or hidden.
+    createDraggableCard(title, { visible = true, onToggle = null } = {}) {
         const card = document.createElement('div');
         card.draggable = true;
         card.style.cssText = `
@@ -45,6 +50,7 @@ export class PIPManager {
             border: 2px solid rgba(255, 255, 255, 0.5);
             box-sizing: border-box; background: transparent;
             cursor: grab; border-radius: 4px; overflow: hidden;
+            display: flex; flex-direction: column;
         `;
 
         const header = document.createElement('div');
@@ -60,12 +66,27 @@ export class PIPManager {
         const select = document.createElement('select');
         select.style.cssText = `font-size: 9px; background: #222; color: #fff; border: none;`;
         select.innerHTML = `<option value="on">Show</option><option value="off">Hide</option>`;
-        select.onchange = (e) => { card.style.display = (e.target.value === 'on') ? 'flex' : 'none'; };
         select.onclick = (e) => e.stopPropagation();
 
         header.appendChild(label);
         header.appendChild(select);
         card.appendChild(header);
+        card.setTitle = (t) => { label.innerText = t; };
+
+        const body = document.createElement('div');
+        body.style.cssText = `position: relative; flex: 1; min-height: 0;`;
+        card.appendChild(body);
+        const show = (on) => {
+            select.value = on ? 'on' : 'off';
+            body.style.display = on ? 'block' : 'none';
+            card.style.flex = on ? '1' : '0 0 auto';
+            card.style.minHeight = on ? '100px' : '0';
+            if (onToggle) onToggle(on);
+        };
+        select.onchange = (e) => show(e.target.value === 'on');
+        card.body = body;
+        card.show = show;
+        show(visible);
 
         card.ondragstart = (e) => { card.style.opacity = '0.5'; card.classList.add('dragging'); };
         card.ondragend = () => { card.style.opacity = '1'; card.classList.remove('dragging'); };
@@ -82,18 +103,34 @@ export class PIPManager {
         return card;
     }
 
-    async initUSBCamera() {
-        const card = this.createDraggableCard('USB CAMERA [LIVE]');
-        card.style.background = '#000';
+    // Hidden by default: the camera is only opened while the card is shown, and released when hidden.
+    initUSBCamera() {
         const video = document.createElement('video');
-        video.autoplay = true; video.playsInline = true;
-        video.style.cssText = `width: 100%; height: 100%; object-fit: cover;`;
-        card.appendChild(video);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-        } catch (err) { card.innerText = "Camera Unavailable"; }
-        
+        video.autoplay = true; video.playsInline = true; video.muted = true;
+        video.style.cssText = `width: 100%; height: 100%; object-fit: cover; display: block;`;
+        const msg = document.createElement('div');
+        msg.style.cssText = `color: #aaa; font: 11px sans-serif; padding: 6px;`;
+        let card = null;   // assigned below; onToggle runs once during creation, before it exists
+        const title = (s) => card && card.setTitle('USB CAMERA ' + s);
+        const onToggle = async (on) => {
+            if (!on) {
+                if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+                title('(off)');
+                return;
+            }
+            if (video.srcObject) return;
+            msg.textContent = ''; title('(connecting…)');
+            try {
+                video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true });
+                title('[LIVE]');
+            } catch (err) { msg.textContent = 'Camera Unavailable'; title('(no camera found)'); }
+        };
+        card = this.createDraggableCard('USB CAMERA (off)', { visible: false, onToggle });
+        card.style.background = '#000';
+        card.body.appendChild(video);
+        card.body.appendChild(msg);
+
         this.views.push({ name: 'USB', card: card, isVideo: true, video: video });
     }
 
@@ -124,8 +161,9 @@ export class PIPManager {
         this.renderer.setScissorTest(true);
 
         this.views.forEach(view => {
-            if (view.card.style.display !== 'none' && view.card.getBoundingClientRect().height > 0) {
-                const rect = view.card.getBoundingClientRect();
+            if (this.container.style.display !== 'none' && view.card.body.style.display !== 'none'
+                && view.card.body.getBoundingClientRect().height > 0) {
+                const rect = view.card.body.getBoundingClientRect();   // below the header
                 
                 if (!view.isVideo) {
                     // Measure the target ONCE (world AABB changes as parts rotate,

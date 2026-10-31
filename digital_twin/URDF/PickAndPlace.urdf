@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the SolidWorks Pack and Go "Pick and Place - Final Configuration" by build_urdf.py. -->
+<robot name="pick_and_place_final">
+  <link name="world" />
+  <joint name="world_to_base" type="fixed">
+    <parent link="world" />
+    <child link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.005698 -0.066734 0.031434" rpy="0 0 0" />
+      <mass value="4.031908" />
+      <inertia ixx="2.262408e-01" ixy="9.177899e-03" ixz="2.159456e-04" iyy="2.438774e-01" iyz="-1.042130e-03" izz="4.678064e-01" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/base_link.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="leadscrew_l">
+    <inertial>
+      <origin xyz="-0.000042 -0.272779 -0.000018" rpy="0 0 0" />
+      <mass value="0.060160" />
+      <inertia ixx="2.280016e-03" ixy="2.724872e-07" ixz="9.900296e-11" iyy="2.684966e-06" iyz="-4.095173e-07" izz="2.280017e-03" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/leadscrew_l.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="leadscrew_r">
+    <inertial>
+      <origin xyz="-0.000045 -0.272454 -0.000179" rpy="0 0 0" />
+      <mass value="0.060162" />
+      <inertia ixx="2.272020e-03" ixy="2.447814e-07" ixz="1.485930e-10" iyy="5.174181e-07" iyz="-1.582456e-06" izz="2.272018e-03" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/leadscrew_r.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="y_axis_assembly">
+    <inertial>
+      <origin xyz="-0.029385 -0.005137 0.048809" rpy="0 0 0" />
+      <mass value="1.852430" />
+      <inertia ixx="2.205907e-03" ixy="-2.828533e-03" ixz="1.672971e-03" iyy="9.443421e-02" iyz="3.215218e-04" izz="9.412763e-02" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/y_axis_assembly.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="toolhead_carriage">
+    <inertial>
+      <origin xyz="0.000047 0.003870 -0.001246" rpy="0 0 0" />
+      <mass value="1.013845" />
+      <inertia ixx="1.373242e-03" ixy="2.736676e-06" ixz="-1.877601e-06" iyy="2.594376e-03" iyz="2.937368e-04" izz="1.648065e-03" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/toolhead_carriage.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="z1_mount">
+    <inertial>
+      <origin xyz="-0.000179 -0.001306 -0.000136" rpy="0 0 0" />
+      <mass value="0.294920" />
+      <inertia ixx="9.686356e-05" ixy="-2.292353e-07" ixz="3.091797e-08" iyy="1.173421e-04" iyz="9.172604e-08" izz="4.614241e-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/z1_mount.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="z2_nozzle">
+    <inertial>
+      <origin xyz="-0.002266 0.006441 0.004436" rpy="0 0 0" />
+      <mass value="0.396546" />
+      <inertia ixx="1.952721e-04" ixy="1.707709e-05" ixz="1.015046e-05" iyy="1.516365e-04" iyz="-4.204869e-05" izz="1.239965e-04" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/z2_nozzle.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_servo_arm">
+    <inertial>
+      <origin xyz="-0.000010 -0.000597 -0.000549" rpy="0 0 0" />
+      <mass value="0.000131" />
+      <inertia ixx="1.056472e-09" ixy="-4.967500e-12" ixz="1.620951e-12" iyy="7.717128e-10" iyz="9.276402e-11" izz="1.154364e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_servo_arm.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_rod">
+    <inertial>
+      <origin xyz="0.000217 -0.013962 0.003757" rpy="0 0 0" />
+      <mass value="0.000293" />
+      <inertia ixx="2.083306e-08" ixy="3.128246e-10" ixz="-3.507431e-12" iyy="1.167952e-09" iyz="2.205436e-10" izz="2.142581e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_rod.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_advancer">
+    <inertial>
+      <origin xyz="0.000442 -0.021945 0.000038" rpy="0 0 0" />
+      <mass value="0.000784" />
+      <inertia ixx="2.183611e-07" ixy="4.172488e-09" ixz="-2.394498e-10" iyy="7.537609e-09" iyz="2.332574e-09" izz="2.216206e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_advancer.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_tape">
+    <inertial>
+      <origin xyz="-0.001961 0.000694 -0.000815" rpy="0 0 0" />
+      <mass value="0.000476" />
+      <inertia ixx="1.908329e-07" ixy="-2.535564e-10" ixz="-3.050656e-10" iyy="2.288424e-09" iyz="-2.852692e-10" izz="1.921829e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_tape.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_spool_drive">
+    <inertial>
+      <origin xyz="0.000490 -0.000041 0.000061" rpy="0 0 0" />
+      <mass value="0.000378" />
+      <inertia ixx="5.825700e-11" ixy="2.611160e-14" ixz="1.315782e-11" iyy="1.859998e-09" iyz="-4.577640e-16" izz="1.864840e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_spool_drive.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_spool">
+    <inertial>
+      <origin xyz="0.000054 0.000055 0.000013" rpy="0 0 0" />
+      <mass value="0.000190" />
+      <inertia ixx="0.000000e+00" ixy="0.000000e+00" ixz="0.000000e+00" iyy="0.000000e+00" iyz="0.000000e+00" izz="0.000000e+00" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_spool.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="feeder_tension_lever">
+    <inertial>
+      <origin xyz="0.000000 0.010254 0.008602" rpy="0 0 0" />
+      <mass value="0.004653" />
+      <inertia ixx="9.310749e-07" ixy="1.271455e-16" ixz="1.649862e-16" iyy="4.288619e-07" iyz="-2.791839e-07" izz="5.704743e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/feeder_tension_lever.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="y_motor_pulley">
+    <inertial>
+      <origin xyz="0.001036 -0.001282 -0.001038" rpy="0 0 0" />
+      <mass value="0.016858" />
+      <inertia ixx="6.486825e-07" ixy="2.174460e-09" ixz="-2.856642e-11" iyy="5.162899e-07" iyz="-2.172144e-09" izz="6.486859e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/y_motor_pulley.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="y_idler_pulley">
+    <inertial>
+      <origin xyz="-0.000003 -0.000545 0.000027" rpy="0 0 0" />
+      <mass value="0.009384" />
+      <inertia ixx="2.222479e-07" ixy="-8.161636e-13" ixz="1.278982e-13" iyy="2.388004e-07" iyz="7.612327e-13" izz="2.222383e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/y_idler_pulley.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="z_pulley">
+    <inertial>
+      <origin xyz="0.001436 -0.001283 -0.000300" rpy="0 0 0" />
+      <mass value="0.016858" />
+      <inertia ixx="6.487037e-07" ixy="3.008524e-09" ixz="-1.274957e-11" iyy="5.162867e-07" iyz="-6.282589e-10" izz="6.486527e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/z_pulley.glb" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="leadscrew_l_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="leadscrew_l" />
+    <origin xyz="0.280029 0.130761 0.021889" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <limit lower="-104.750516" upper="152.402310" effort="10" velocity="1" />
+  </joint>
+  <joint name="leadscrew_r_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="leadscrew_r" />
+    <origin xyz="-0.279972 0.130761 0.021889" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <limit lower="-152.402310" upper="104.750516" effort="10" velocity="1" />
+    <mimic joint="leadscrew_l_joint" multiplier="-1.00000000" offset="0" />
+  </joint>
+  <joint name="y_axis_assembly_joint" type="prismatic">
+    <parent link="base_link" />
+    <child link="y_axis_assembly" />
+    <origin xyz="-0.001701 -0.101907 0.050888" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <limit lower="-0.133372" upper="0.194045" effort="10" velocity="1" />
+    <mimic joint="leadscrew_l_joint" multiplier="0.00127324" offset="0" />
+  </joint>
+  <joint name="toolhead_carriage_joint" type="prismatic">
+    <parent link="y_axis_assembly" />
+    <child link="toolhead_carriage" />
+    <origin xyz="-0.038347 0.009671 0.085878" rpy="0 0 0" />
+    <axis xyz="1.000000 0.000000 0.000000" />
+    <limit lower="-0.098916" upper="0.179013" effort="10" velocity="1" />
+  </joint>
+  <joint name="z1_joint" type="prismatic">
+    <parent link="toolhead_carriage" />
+    <child link="z1_mount" />
+    <origin xyz="-0.035792 0.041989 -0.093359" rpy="0 0 0" />
+    <axis xyz="0.000000 0.000000 1.000000" />
+    <limit lower="0.000000" upper="0.066770" effort="10" velocity="1" />
+  </joint>
+  <joint name="z2_joint" type="prismatic">
+    <parent link="toolhead_carriage" />
+    <child link="z2_nozzle" />
+    <origin xyz="0.036108 0.041989 -0.026589" rpy="0 0 0" />
+    <axis xyz="0.000000 0.000000 1.000000" />
+    <limit lower="-0.066770" upper="-0.000000" effort="10" velocity="1" />
+    <mimic joint="z1_joint" multiplier="-1.00000000" offset="0" />
+  </joint>
+  <joint name="feeder_servo_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="feeder_servo_arm" />
+    <origin xyz="-0.106840 0.281006 0.062843" rpy="0 0 0" />
+    <axis xyz="0.000000 0.000000 1.000000" />
+    <limit lower="-1.570796" upper="1.570796" effort="10" velocity="1" />
+  </joint>
+  <joint name="feeder_rod_joint" type="revolute">
+    <parent link="feeder_servo_arm" />
+    <child link="feeder_rod" />
+    <origin xyz="-0.000113 -0.006499 0.000000" rpy="0 0 0" />
+    <axis xyz="0.000000 0.000000 1.000000" />
+    <limit lower="-3.141593" upper="3.141593" effort="10" velocity="1" />
+  </joint>
+  <link name="feeder_rod_front" />
+  <joint name="feeder_rod_front_fixed" type="fixed">
+    <parent link="feeder_rod" />
+    <child link="feeder_rod_front" />
+    <origin xyz="0.000444 -0.025303 0.000239" rpy="0 0 0" />
+  </joint>
+  <joint name="feeder_advancer_joint" type="prismatic">
+    <parent link="base_link" />
+    <child link="feeder_advancer" />
+    <origin xyz="-0.106509 0.249204 0.063082" rpy="0 0 0" />
+    <axis xyz="-0.000000 -1.000000 -0.000000" />
+    <limit lower="-0.007939" upper="0.000000" effort="10" velocity="1" />
+  </joint>
+  <joint name="feeder_tape_joint" type="prismatic">
+    <parent link="base_link" />
+    <child link="feeder_tape" />
+    <origin xyz="-0.104796 0.199994 0.056025" rpy="0 0 0" />
+    <axis xyz="-0.000000 -1.000000 -0.000000" />
+    <limit lower="0.000000" upper="0.004000" effort="10" velocity="1" />
+  </joint>
+  <joint name="feeder_spool_drive_joint" type="continuous">
+    <parent link="base_link" />
+    <child link="feeder_spool_drive" />
+    <origin xyz="-0.108181 0.355641 0.068818" rpy="0 0 0" />
+    <axis xyz="1.000000 0.000000 0.000000" />
+  </joint>
+  <joint name="feeder_spool_joint" type="continuous">
+    <parent link="base_link" />
+    <child link="feeder_spool" />
+    <origin xyz="-0.108003 0.344973 0.072047" rpy="0 0 0" />
+    <axis xyz="1.000000 0.000000 0.000000" />
+    <mimic joint="feeder_spool_drive_joint" multiplier="-1.00000000" offset="0" />
+  </joint>
+  <joint name="feeder_tension_lever_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="feeder_tension_lever" />
+    <origin xyz="-0.106743 0.294151 0.072650" rpy="0 0 0" />
+    <axis xyz="-1.000000 -0.000000 -0.000000" />
+    <limit lower="-0.200000" upper="0.050000" effort="10" velocity="1" />
+  </joint>
+  <joint name="z_pulley_joint" type="continuous">
+    <parent link="toolhead_carriage" />
+    <child link="z_pulley" />
+    <origin xyz="-0.001181 0.034793 0.035533" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <mimic joint="z1_joint" multiplier="157.07963268" offset="0" />
+  </joint>
+  <joint name="y_motor_pulley_joint" type="continuous">
+    <parent link="y_axis_assembly" />
+    <child link="y_motor_pulley" />
+    <origin xyz="-0.266794 -0.017173 0.077759" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <mimic joint="toolhead_carriage_joint" multiplier="157.07963268" offset="0" />
+  </joint>
+  <joint name="y_idler_pulley_joint" type="continuous">
+    <parent link="y_axis_assembly" />
+    <child link="y_idler_pulley" />
+    <origin xyz="0.289204 -0.015086 0.076735" rpy="0 0 0" />
+    <axis xyz="0.000000 1.000000 0.000000" />
+    <mimic joint="toolhead_carriage_joint" multiplier="157.07963268" offset="0" />
+  </joint>
+</robot>

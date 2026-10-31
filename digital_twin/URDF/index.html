@@ -17,9 +17,16 @@
   #log { font-size:11px; color:#e06060; white-space:pre-wrap; margin-top:10px; }
   #status { font-size:12px; color:#888; margin-bottom:8px; }
   button { margin:2px 2px 8px 0; font-size:11px; }
+  #toolbar { position:fixed; top:6px; left:50%; transform:translateX(-50%); z-index:40; display:flex; gap:4px; }
+  #toolbar button { margin:0; padding:3px 8px; background:rgba(25,25,30,0.92); color:#ddd;
+                    border:1px solid #444; border-radius:4px; cursor:pointer; }
 </style>
 </head>
 <body>
+<div id="toolbar">
+  <button id="panelBtn">Hide panel</button>
+  <button id="camBtn">Hide cameras</button>
+</div>
 <div id="panel">
   <h3>Pick &amp; Place</h3>
   <div id="status">loading...</div>
@@ -41,6 +48,20 @@
   </div>
   <button id="homeBtn">Rest pose (zero)</button>
   <button id="collBtn">Toggle collision (STL)</button>
+  <div id="colors" style="display:none;margin-bottom:10px;border-top:1px solid #333;padding-top:8px;">
+    <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Part color</div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <select id="color-type" style="flex:1;min-width:0;font-size:11px;background:#111;color:#ddd;border:1px solid #444;"></select>
+      <input id="color-pick" type="color" style="width:32px;height:22px;padding:0;border:1px solid #444;background:#111;">
+    </div>
+    <button id="color-reset" style="margin-top:4px;">Reset colors</button>
+  </div>
+  <div id="feeder" style="display:none;margin-bottom:10px;border-top:1px solid #333;padding-top:8px;">
+    <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Feeder</div>
+    <button id="feedBtn">Feed (4 mm)</button>
+    <label style="font-size:11px;"><input id="coverChk" type="checkbox" checked> Show cover plate</label>
+    <div id="coverMotor" style="font-size:11px;color:#888;margin-top:2px;">cover motor: off (switch pressed)</div>
+  </div>
   <div id="joints"></div>
   <div id="log"></div>
 </div>
@@ -64,7 +85,8 @@ import URDFLoader from 'urdf-loader';
 import { PIPManager } from './pip_cameras.js';
 
 // ====================== CONFIG ======================
-const URDF_PATH = 'PickAndPlace_glb.urdf';   // relative to this html file
+// relative to this html file (?urdf=<path> loads another); built by ../sw2urdf/build_urdf.py
+const URDF_PATH = new URLSearchParams(location.search).get('urdf') || 'PickAndPlace.urdf';
 // ====================================================
 
 const logEl = document.getElementById('log');
@@ -81,6 +103,21 @@ renderer.setPixelRatio(devicePixelRatio);
 renderer.autoClear = false;
 const pip = new PIPManager(renderer);
 document.body.appendChild(renderer.domElement);
+
+// --- toolbar: hide/show the control panel and the camera sidebar (remembered per browser) ---
+function uiToggle(btnId, key, label, apply, defaultOn) {
+  const btn = document.getElementById(btnId);
+  let on = defaultOn;
+  try { const s = localStorage.getItem(key); if (s) on = s === 'on'; } catch (e) {}
+  const set = v => {
+    on = v; apply(v); btn.textContent = (v ? 'Hide ' : 'Show ') + label;
+    try { localStorage.setItem(key, v ? 'on' : 'off'); } catch (e) {}
+  };
+  btn.onclick = () => set(!on);
+  set(on);
+}
+uiToggle('panelBtn', 'pnp-ui-panel', 'panel', v => { document.getElementById('panel').style.display = v ? '' : 'none'; }, true);
+uiToggle('camBtn', 'pnp-ui-cams', 'cameras', v => pip.setVisible(v), false);   // camera sidebar starts hidden
 const controls = new OrbitControls(camera, renderer.domElement);
 
 scene.add(new THREE.AmbientLight(0xffffff, 1.2));
@@ -92,6 +129,55 @@ dir2.position.set(-3, -2, -1);
 scene.add(dir2);
 scene.add(new THREE.GridHelper(4, 40, 0x333338, 0x28282c));
 scene.add(new THREE.AxesHelper(0.3));
+
+// --- per-part-type colors (from the part_types.json next to the URDF) ---
+// Meshes are named "pt_<index>#<n>" by sw2urdf; every part of one type shares one material.
+const URDF_DIR = URDF_PATH.includes('/') ? URDF_PATH.slice(0, URDF_PATH.lastIndexOf('/') + 1) : '';
+const PART_TYPES = await fetch(URDF_DIR + 'part_types.json').then(r => r.ok ? r.json() : null).catch(() => null);
+const COLOR_KEY = 'pnp-part-colors:' + URDF_PATH;
+let savedColors = {};
+try { savedColors = JSON.parse(localStorage.getItem(COLOR_KEY)) || {}; } catch (e) {}
+const partMats = (PART_TYPES || []).map(t =>
+  new THREE.MeshStandardMaterial({ color: savedColors[t.name] || t.color, metalness: 0.2, roughness: 0.6 }));
+const partMeshes = [];   // part type index -> loaded meshes
+const COVER_TYPE = (PART_TYPES || []).findIndex(t => t.name === 'base_cover');   // feeder cover plate
+document.getElementById('coverChk').onchange = e => {
+  (partMeshes[COVER_TYPE] || []).forEach(m => { m.visible = e.target.checked; });
+};
+function partTypeIndex(o) {
+  for (let p = o; p; p = p.parent) { const m = /^pt_(\d+)/.exec(p.name || ''); if (m) return +m[1]; }
+  return -1;
+}
+if (PART_TYPES) {
+  const sel = document.getElementById('color-type'), pick = document.getElementById('color-pick');
+  // one <optgroup> per group: "All <group>" recolors every member, then the individual part types
+  const groups = new Map();
+  PART_TYPES.forEach((t, i) => {
+    const g = t.group || 'Parts';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(i);
+  });
+  for (const [g, idx] of groups) {
+    const og = document.createElement('optgroup'); og.label = g;
+    og.appendChild(new Option(`All ${g.toLowerCase()} (${idx.reduce((n, i) => n + PART_TYPES[i].count, 0)})`, 'g:' + g));
+    idx.forEach(i => og.appendChild(new Option(`${PART_TYPES[i].name} (${PART_TYPES[i].count})`, i)));
+    sel.appendChild(og);
+  }
+  const members = () => sel.value.startsWith('g:') ? groups.get(sel.value.slice(2)) : [+sel.value];
+  const show = () => { pick.value = '#' + partMats[members()[0]].color.getHexString(); };
+  const save = () => { try { localStorage.setItem(COLOR_KEY, JSON.stringify(savedColors)); } catch (e) {} };
+  sel.onchange = show;
+  pick.oninput = () => {
+    for (const i of members()) { partMats[i].color.set(pick.value); savedColors[PART_TYPES[i].name] = pick.value; }
+    save();
+  };
+  document.getElementById('color-reset').onclick = () => {
+    PART_TYPES.forEach((t, i) => partMats[i].color.set(t.color));
+    savedColors = {}; save(); show();
+  };
+  show();
+  document.getElementById('colors').style.display = '';
+}
 
 // --- URDF loading with explicit glb + stl support ---
 const manager = new THREE.LoadingManager();
@@ -113,6 +199,12 @@ loader.loadMeshCb = (path, manager, material, onComplete) => {
             if (m.metalness !== undefined) m.metalness = Math.min(m.metalness, 0.35);
             if (m.roughness !== undefined) m.roughness = Math.max(m.roughness, 0.45);
           });
+          const k = partTypeIndex(o);
+          if (k >= 0 && partMats[k]) {
+            o.material = partMats[k];
+            (partMeshes[k] ||= []).push(o);
+            if (k === COVER_TYPE) o.visible = document.getElementById('coverChk').checked;
+          }
         });
         onComplete(g.scene);
       },
@@ -141,14 +233,27 @@ manager.onLoad = () => {
 };
 loader.load(URDF_PATH, r => {
   robot = r;
+  if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { robot, camera, controls });   // console inspection
   robot.rotation.x = -Math.PI / 2;   // URDF Z-up -> three.js Y-up
   scene.add(robot);
   
-  pip.attachCameras(robot, "Pulley_Y", "Y_Motor_Pulley", "X_Motor_Pulley", "Shaft")
+  pip.attachCameras(robot, "toolhead_carriage", "z1_mount", "feeder_servo_arm", "feeder_tension_lever");
 
   robot.traverse(o => { if (o.isURDFCollider) o.visible = false; });
 
   buildJointUI(robot);
+  if (robot.joints.feeder_servo_joint) {
+    document.getElementById('feeder').style.display = '';
+    robot.joints.feeder_tape_joint.setJointValue(0); syncSlider('feeder_tape_joint', 0);
+    robot.joints.feeder_tension_lever_joint.setJointValue(0);    // taut cover tape: switch pressed, motor off
+    syncSlider('feeder_tension_lever_joint', 0);                 // slider kept so the lever can be swung by hand
+    for (const n of ['feeder_rod_joint', 'feeder_advancer_joint'])   // driven by the servo linkage, no slider
+      document.querySelector(`input[data-joint="${n}"]`)?.closest('.joint').remove();
+    feederPose(FEEDER.RETRACT);   // idle between picks: lever retracted
+    // dragging the servo slider moves the piston rod and lever with it
+    document.querySelector('input[data-joint="feeder_servo_joint"]')
+      .addEventListener('input', e => feederPose(parseFloat(e.target.value) * 180 / Math.PI + 90));
+  }
   connectSerial(robot);
   statusEl.textContent =
     `links: ${Object.keys(robot.links).length}, joints: ${Object.keys(robot.joints).length}`;
@@ -207,6 +312,113 @@ function buildJointUI(r) {
   }
 }
 
+// ---- 0816 feeder (mgrl 0816-feeder-firmware) ----
+// Servo angle A in degrees; the URDF joint is A - 90 (CAD pose = fully advanced). Slider-crank: the rod pivots
+// on the horn hole, its front hole (feeder_rod_front marker) is pinned to the pin lever, which slides along the
+// tape. The pin carries the tape only on the last pitch of the advance stroke (15 -> 90 deg); on retract it
+// slides back to the next sprocket hole.
+// M600 [F<mm>] feeds and stays advanced, M601 retracts, M603 A<deg> sets the angle (config.h defaults).
+// Cover tape: advancing the carrier tape gives the cover tape slack, the spring tips the tension lever off the
+// microswitch and the N20 runs; the gears wind the slack in until the taut tape tips the lever back onto the switch.
+const FEEDER = { ADVANCED: 90, RETRACT: 15, SETTLE_MS: 240, PITCH: 0.004,
+                 GEAR_R: 0.006,           // m, 17T module 0.7 pitch radius: cover tape wound per gear radian
+                 // from mgrl's 0816-feeder-actuating.mp4: the arm jumps ~0.14 rad as the servo stroke ends, then
+                 // the gears wind it back down over ~0.4 s and stop
+                 WIND_SPEED: 0.01,        // m/s of cover tape while the motor runs (4 mm in ~0.4 s)
+                 LEVER_PER_M: -0.14 / 0.004 };   // rad of lever release per m of slack
+const feeder = { angle: FEEDER.ADVANCED, tape: 0, slack: 0, winding: false, queue: Promise.resolve(), rodLen: null };
+function feederLever() {
+  const j = robot.joints.feeder_tension_lever_joint;
+  j.setJointValue(Math.max(j.limit.lower, feeder.slack * FEEDER.LEVER_PER_M));
+  syncSlider('feeder_tension_lever_joint', j.angle);
+  document.getElementById('coverMotor').textContent = feeder.slack > 0 ? 'cover motor: on' : 'cover motor: off (switch pressed)';
+}
+// N20 runs while the switch is open, independent of the servo (it has its own feedback line)
+function feederWind() {
+  if (feeder.winding) return;
+  feeder.winding = true;
+  const spool = robot.joints.feeder_spool_drive_joint;
+  let last = performance.now();
+  (function step(now) {
+    const wound = Math.min(feeder.slack, FEEDER.WIND_SPEED * (now - last) / 1000); last = now;
+    feeder.slack -= wound;
+    spool.setJointValue(spool.angle + wound / FEEDER.GEAR_R); syncSlider('feeder_spool_drive_joint', spool.angle);
+    feederLever();
+    if (feeder.slack > 1e-6) requestAnimationFrame(step);
+    else { feeder.slack = 0; feederLever(); feeder.winding = false; }
+  })(last);
+}
+const deg = d => d * Math.PI / 180;
+function syncSlider(name, v) {
+  const s = document.querySelector(`input[data-joint="${name}"]`);
+  if (!s) return;
+  s.value = v;
+  const lab = s.parentElement.querySelector('.val');
+  if (lab) lab.textContent = `${v.toFixed(3)} ${robot.joints[name].jointType === 'prismatic' ? 'm' : 'rad'}`;
+}
+// put the servo at angle A, slide the pin lever to where the rod length allows, and swing the rod onto it;
+// returns the lever position along the tape (0 = fully advanced, negative = pulled back)
+function feederPose(A) {
+  const js = robot.joints, servo = js.feeder_servo_joint, rodJ = js.feeder_rod_joint, adv = js.feeder_advancer_joint;
+  const rod = robot.links.feeder_rod, front = robot.links.feeder_rod_front, base = adv.parent;
+  const wp = o => o.getWorldPosition(new THREE.Vector3());
+  const q = THREE.MathUtils.clamp(deg(A - 90), servo.limit.lower, servo.limit.upper);
+  servo.setJointValue(q); rodJ.setJointValue(0); robot.updateMatrixWorld(true);
+  if (feeder.rodLen === null) feeder.rodLen = wp(front).distanceTo(wp(rod));
+  // lever pin F = F0 + s*u on its line; solve |F - H| = rod length (H = horn hole), taking the forward root
+  const H = base.worldToLocal(wp(rod)), F0 = adv.origPosition, u = adv.axis.clone().normalize();
+  const d = F0.clone().sub(H), b = d.dot(u);
+  const s = THREE.MathUtils.clamp(-b + Math.sqrt(Math.max(0, b * b - d.lengthSq() + feeder.rodLen ** 2)),
+                                  adv.limit.lower, adv.limit.upper);
+  adv.setJointValue(s);
+  // rod angle: turn the rod about its pivot until its front hole points at the lever pin
+  const Hw = wp(rod), v0 = wp(front).sub(Hw), v = base.localToWorld(F0.clone().addScaledVector(u, s)).sub(Hw);
+  const n = rodJ.axis.clone().transformDirection(rod.matrixWorld);
+  rodJ.setJointValue(Math.atan2(v0.clone().cross(v).dot(n), v0.dot(v)));
+  syncSlider('feeder_servo_joint', q);
+  feeder.angle = A;
+  return s;
+}
+function feederSetTape() {
+  const t = feeder.tape % FEEDER.PITCH;   // tape holes repeat every pitch, so wrap the stub
+  robot.joints.feeder_tape_joint.setJointValue(t); syncSlider('feeder_tape_joint', t);
+}
+// sweep the servo to angle A at the firmware's settle speed; the tape and cover-tape spool follow the pin
+function feederMove(A) {
+  return new Promise(resolve => {
+    const A0 = feeder.angle, ms = Math.max(60, FEEDER.SETTLE_MS * Math.abs(A - A0) / (FEEDER.ADVANCED - FEEDER.RETRACT));
+    const t0 = performance.now();
+    let prev = feederPose(A0);
+    (function step(now) {
+      const s = Math.min(1, (now - t0) / ms), e = s * s * (3 - 2 * s);
+      const a = feederPose(A0 + (A - A0) * e);
+      const push = Math.max(0, a - Math.max(prev, -FEEDER.PITCH));   // forward travel inside the last pitch
+      if (push > 0) { feeder.tape += push; feeder.slack += push; feederLever(); }
+      feederSetTape(); prev = a;
+      if (s < 1) requestAnimationFrame(step);
+      else { if (feeder.slack > 0) feederWind(); resolve(); }   // motor winds once the stroke has made the slack
+    })(t0);
+  });
+}
+function feederCommand(num, w) {
+  const run = async () => {
+    if (num === 600) {
+      const n = Math.max(1, Math.round((w.F || FEEDER.PITCH * 1000) / (FEEDER.PITCH * 1000)));
+      for (let i = 0; i < n; i++) {
+        if (feeder.angle > FEEDER.RETRACT) await feederMove(FEEDER.RETRACT);
+        await feederMove(FEEDER.ADVANCED);
+      }
+    } else if (num === 601) await feederMove(FEEDER.RETRACT);
+    else if (num === 603) await feederMove(THREE.MathUtils.clamp(w.A ?? 90, 0, 180));
+  };
+  return (feeder.queue = feeder.queue.then(run));
+}
+const isFeederCode = up => /^M60[0-3]\b|^M6[12]0\b/.test(up);
+document.getElementById('feedBtn').onclick = () => {   // one pick cycle: feed, then retract
+  if (!robot || !robot.joints.feeder_servo_joint) return;
+  feederCommand(600, {}); feederCommand(601, {});
+};
+
 document.getElementById('homeBtn').onclick = () => {
   if (!robot) return;
   for (const j of Object.values(robot.joints)) j.setJointValue(0);
@@ -235,11 +447,9 @@ function connectSerial(robot) {
   const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8765';
   let ws;
 
-  // one source of truth for kinematics (mm of travel per motor rev)
-  const X_LEAD = 52.0;   // 26T GT2
-  const Y_LEAD = 48.0;   // 24T GT2
+  // one source of truth for kinematics (must match sw2urdf/build_urdf.py and serial_bridge.py)
+  const X_LEAD = 8.0;    // mm per lead-screw rev
   const ACCEL = 3000.0;  // mm/s^2, mirror of firmware M201
-  const E_LEAD = 0.5 * 19 / 32;  // plunger mm per E-gear rev
 
   function setLive(txt, color) { liveEl.textContent = 'serial: ' + txt; liveEl.style.color = color; }
   const logEl = document.getElementById('gcode-log');
@@ -254,15 +464,15 @@ function connectSerial(robot) {
     busy: false,
   };
 
+  // X: lead screws (radians); Y: belt carriage and Z1: prismatic (meters). The gantry, Z2 and the
+  // pulleys follow through URDF mimics. E has no joint (the feeder runs on its own controller).
   function applyJoints(xmm, ymm, emm, zmm) {
-    const jx = robot.joints["X_Motor_Pulley_Revolute"];
-    const jy = robot.joints["Y_Motor_Pulley_Revolute"];
-    const je = robot.joints["E_Gear_19T_Joint"];
-    const jz = robot.joints["Z_Mount_Prismatic"];
-    if (jx) jx.setJointValue(xmm * (2 * Math.PI / X_LEAD));
-    if (jy) jy.setJointValue(ymm * (2 * Math.PI / Y_LEAD));
-    if (je && emm !== undefined) je.setJointValue(emm * (2 * Math.PI / E_LEAD));
-    if (jz && zmm !== undefined) jz.setJointValue(zmm * 0.001);
+    const jls = robot.joints["leadscrew_l_joint"];
+    const jtc = robot.joints["toolhead_carriage_joint"];
+    const jz1 = robot.joints["z1_joint"];
+    if (jls) jls.setJointValue(xmm * (2 * Math.PI / X_LEAD));
+    if (jtc) jtc.setJointValue(ymm * 0.001);
+    if (jz1 && zmm !== undefined) jz1.setJointValue(zmm * 0.001);
   }
 
   function parseWords(line) {
@@ -381,7 +591,8 @@ function connectSerial(robot) {
       }
       done(); return;                                    // other G: no-op
     }
-    // M-codes have no kinematic effect in the sim
+    // feeder M-codes (0816 firmware) animate the feeder; other M-codes have no kinematic effect in the sim
+    if (isFeederCode(up) && robot.joints.feeder_servo_joint) { feederCommand(num, w).then(done); return; }
     done();
   }
 
@@ -389,7 +600,10 @@ function connectSerial(robot) {
   function sendGcode(line) {
     const connected = ws && ws.readyState === WebSocket.OPEN;
     const up = line.toUpperCase();
-    if (connected) {
+    if (isFeederCode(up.trim())) {
+      // the feeder has its own controller; never forward these to the RAMBo (Marlin M600 = filament change)
+      gcodeLog('> ' + line + ' (feeder, sim)');
+    } else if (connected) {
       if (/^G[0-3]\b/.test(up)) ws.send(JSON.stringify({ gcode: [line, "M400", "M114"] }));
       else ws.send(JSON.stringify({ gcode: line }));
       gcodeLog('> ' + line);
@@ -420,10 +634,9 @@ function connectSerial(robot) {
         const j = robot.joints[name];
         if (!j) continue;
         j.setJointValue(val);
-        if (name === "X_Motor_Pulley_Revolute") sim.pos.X = val * (X_LEAD / (2 * Math.PI));
-        if (name === "Y_Motor_Pulley_Revolute") sim.pos.Y = val * (Y_LEAD / (2 * Math.PI));
-        if (name === "E_Gear_19T_Joint") sim.pos.E = val * (E_LEAD / (2 * Math.PI));
-        if (name === "Z_Mount_Prismatic") sim.pos.Z = val * 1000;
+        if (name === "leadscrew_l_joint") sim.pos.X = val * (X_LEAD / (2 * Math.PI));
+        if (name === "toolhead_carriage_joint") sim.pos.Y = val * 1000;
+        if (name === "z1_joint") sim.pos.Z = val * 1000;
         const s = document.querySelector(`input[data-joint="${name}"]`);
         if (s) {
           s.value = val;
