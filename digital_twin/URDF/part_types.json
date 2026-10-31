@@ -1,0 +1,386 @@
+[
+ {
+  "name": "2040 Extrusion 600mm",
+  "group": "Extrusions",
+  "color": "#bfc4cc",
+  "count": 2
+ },
+ {
+  "name": "4040 Extrusion 600mm",
+  "group": "Extrusions",
+  "color": "#bfc4cc",
+  "count": 3
+ },
+ {
+  "name": "5mm Post-Assembly T-Nut",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 12
+ },
+ {
+  "name": "5mm-8mm Flex Coupling",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 2
+ },
+ {
+  "name": "Base",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Brass Motion Coupling",
+  "group": "Leadscrews",
+  "color": "#d4b04a",
+  "count": 1
+ },
+ {
+  "name": "Corner Bracket",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 2
+ },
+ {
+  "name": "DIN - Spur gear 0.7M 17T 20PA 5,5FW ---S17A75H50L7N_DIN - Spur gear 0.7M 17T 20PA 5,5FW ---S17A75H50L7N",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "DIN - Spur gear 0.7M 17T 20PA 5,5FW ---S17A75H50L7N_driven_DIN - Spur gear 0.7M 17T 20PA 5,5FW ---S17A75H50L7N",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "Endstop",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 6
+ },
+ {
+  "name": "Endstop Mount - X-Axis - 4.35 Z+",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 6
+ },
+ {
+  "name": "Existing Y-Axis Slider",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Flat Socket Head Screw - M5x8",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 2
+ },
+ {
+  "name": "GT2 Pulley - 20T",
+  "group": "Pulleys",
+  "color": "#4fb0c6",
+  "count": 1
+ },
+ {
+  "name": "GT2 Pulley and Bearing - ID4 - 20 Teeth",
+  "group": "Pulleys",
+  "color": "#4fb0c6",
+  "count": 1
+ },
+ {
+  "name": "GT2 Pulley for Threaded Rod",
+  "group": "Pulleys",
+  "color": "#4fb0c6",
+  "count": 3
+ },
+ {
+  "name": "HGH15CA - Usable",
+  "group": "Linear sliding hardware",
+  "color": "#6a7a8c",
+  "count": 4
+ },
+ {
+  "name": "HGR15 600mm",
+  "group": "Linear sliding hardware",
+  "color": "#6a7a8c",
+  "count": 1
+ },
+ {
+  "name": "HGR15 70mm",
+  "group": "Linear sliding hardware",
+  "color": "#6a7a8c",
+  "count": 2
+ },
+ {
+  "name": "M4 Locknut",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "M4 Spacer - OD6 H7",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "Micro Switch Button",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "MirrorBrass Motion Coupling",
+  "group": "Leadscrews",
+  "color": "#d4b04a",
+  "count": 1
+ },
+ {
+  "name": "MirrorCorner Bracket",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "MirrorExisting Y-Axis Slider",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "MirrorPlastic Brass Coupling Holder",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "MirrorPlastic Coupling Housing",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "MirrorY-Axis Bracket",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "NEMA 17 w Connector",
+  "group": "Motors",
+  "color": "#2e2e33",
+  "count": 4
+ },
+ {
+  "name": "NEMA11 Hollow Shaft with Nozzle",
+  "group": "Motors",
+  "color": "#2e2e33",
+  "count": 1
+ },
+ {
+  "name": "NEMA17 Parallel Mount",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 2
+ },
+ {
+  "name": "PRT0002",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "Panhead Hex Socket Head Screw - M3x10",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 4
+ },
+ {
+  "name": "Panhead Hex Socket Head Screw - M4x25",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "Plastic Brass Coupling Holder",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Plastic Coupling Housing",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Pulley Mount - Y-Axis",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Rod Bearing Mount",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 2
+ },
+ {
+  "name": "Teil2_0_assembly_feeder",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "Threaded Rod - Cosmetic Thread - Cut",
+  "group": "Leadscrews",
+  "color": "#d4b04a",
+  "count": 2
+ },
+ {
+  "name": "Threaded Rod Bearing",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 2
+ },
+ {
+  "name": "Toolhead Mount",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Toolhead Mount - Hollow Shaft Vacuum Stepper",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Y-Axis Bracket",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "base",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "base_cover",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "disabler",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "feeder_pin_new",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "gm12-n20_Predeterminado",
+  "group": "Motors",
+  "color": "#2e2e33",
+  "count": 1
+ },
+ {
+  "name": "lever_coverswitch_pullingSpring",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "lever_servo_advancer",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "motormount y axis",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "n20-motor-pcbv3",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "petg_spring_advancer",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "schaft_g12-n20_Predeterminado",
+  "group": "Motors",
+  "color": "#2e2e33",
+  "count": 1
+ },
+ {
+  "name": "servoarm",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "socket button head cap screw_am",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 1
+ },
+ {
+  "name": "socket head cap screw_am",
+  "group": "Bolts, nuts & OTS hardware",
+  "color": "#8c9199",
+  "count": 2
+ },
+ {
+  "name": "spooler_mountplate_v2",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "spring",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "spring_pull",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "tape_pushdown_springloaded",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "tape_stripe",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ },
+ {
+  "name": "vorspanner_rad",
+  "group": "Feeder",
+  "color": "#598cd9",
+  "count": 1
+ }
+]
