@@ -1,0 +1,3 @@
+2026-11-09, edit configuration.h to have proper stepping amount for Z headers and component rotation. add feeder selection page on STM32. if endtops in place and wired add calibration phase. add cords for PCB compared to the orgin, 
+2026-11-16, Debugging and Automation testing,
+2026-11-23, continue debugging and prepare for demo
