@@ -61,9 +61,9 @@
   </link>
   <link name="toolhead_carriage">
     <inertial>
-      <origin xyz="0.000009 0.009434 -0.006028" rpy="0 0 0" />
-      <mass value="1.586359" />
-      <inertia ixx="2.345244e-03" ixy="2.065900e-06" ixz="1.342473e-06" iyy="3.743970e-03" iyz="4.432344e-04" izz="2.308263e-03" />
+      <origin xyz="0.000022 0.007450 -0.008540" rpy="0 0 0" />
+      <mass value="1.400644" />
+      <inertia ixx="2.834920e-03" ixy="1.764203e-06" ixz="1.332750e-06" iyy="4.565528e-03" iyz="5.031640e-04" izz="2.546225e-03" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
