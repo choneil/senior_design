@@ -3,3 +3,5 @@ trimesh
 scipy
 networkx
 rtree
+shapely
+mapbox_earcut

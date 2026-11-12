@@ -29,6 +29,7 @@
 </div>
 <div id="panel">
   <h3>Pick &amp; Place</h3>
+  <div style="font-size:11px;margin-bottom:6px;"><a href="../RAMBo/index.html" style="color:#8ab4f8;">RAMBo board viewer</a></div>
   <div id="status">loading...</div>
   <div id="live" style="font-size:12px;margin-bottom:8px;color:#e0a060;">serial: disconnected</div>
   <div id="gcode-box" style="margin-bottom:10px;border-top:1px solid #333;padding-top:8px;">
@@ -444,7 +445,9 @@ addEventListener('resize', () => {
 // ---- live serial link + standalone G-code simulator ----
 function connectSerial(robot) {
   const liveEl = document.getElementById('live');
-  const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8765';
+  // the bridge always runs on the viewer's own machine; on https (GitHub Pages) the page host is not it
+  const WS_HOST = location.protocol === 'https:' ? 'localhost' : (location.hostname || 'localhost');
+  const WS_URL = 'ws://' + WS_HOST + ':8765';
   let ws;
 
   // one source of truth for kinematics (must match sw2urdf/build_urdf.py and serial_bridge.py)
@@ -622,7 +625,9 @@ function connectSerial(robot) {
   });
 
   function open() {
-    ws = new WebSocket(WS_URL);
+    // https pages may refuse ws:// (mixed content) by throwing here; stay in standalone mode instead of stalling
+    try { ws = new WebSocket(WS_URL); }
+    catch (e) { ws = null; setLive('standalone (sim, no bridge over https)', '#e0a060'); return; }
     ws.onopen = () => setLive('connected', '#7fc97f');
     ws.onclose = () => { setLive('standalone (sim)', '#e0a060'); setTimeout(open, 3000); };
     ws.onerror = () => ws.close();

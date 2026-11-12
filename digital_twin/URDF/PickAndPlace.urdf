@@ -9,9 +9,9 @@
   </joint>
   <link name="base_link">
     <inertial>
-      <origin xyz="0.005698 -0.066734 0.031434" rpy="0 0 0" />
-      <mass value="4.031908" />
-      <inertia ixx="2.262408e-01" ixy="9.177899e-03" ixz="2.159456e-04" iyy="2.438774e-01" iyz="-1.042130e-03" izz="4.678064e-01" />
+      <origin xyz="0.000348 -0.068008 0.054170" rpy="0 0 0" />
+      <mass value="6.138580" />
+      <inertia ixx="3.338705e-01" ixy="-1.382132e-04" ixz="2.544969e-05" iyy="3.013847e-01" iyz="-8.373129e-04" izz="6.263596e-01" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -61,9 +61,9 @@
   </link>
   <link name="toolhead_carriage">
     <inertial>
-      <origin xyz="0.000047 0.003870 -0.001246" rpy="0 0 0" />
-      <mass value="1.013845" />
-      <inertia ixx="1.373242e-03" ixy="2.736676e-06" ixz="-1.877601e-06" iyy="2.594376e-03" iyz="2.937368e-04" izz="1.648065e-03" />
+      <origin xyz="0.000009 0.009434 -0.006028" rpy="0 0 0" />
+      <mass value="1.586359" />
+      <inertia ixx="2.345244e-03" ixy="2.065900e-06" ixz="1.342473e-06" iyy="3.743970e-03" iyz="4.432344e-04" izz="2.308263e-03" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -74,7 +74,7 @@
   </link>
   <link name="z1_mount">
     <inertial>
-      <origin xyz="-0.000179 -0.001306 -0.000136" rpy="0 0 0" />
+      <origin xyz="-0.000178 -0.001306 -0.000128" rpy="0 0 0" />
       <mass value="0.294920" />
       <inertia ixx="9.686356e-05" ixy="-2.292353e-07" ixz="3.091797e-08" iyy="1.173421e-04" iyz="9.172604e-08" izz="4.614241e-05" />
     </inertial>
@@ -87,9 +87,9 @@
   </link>
   <link name="z2_nozzle">
     <inertial>
-      <origin xyz="-0.002266 0.006441 0.004436" rpy="0 0 0" />
-      <mass value="0.396546" />
-      <inertia ixx="1.952721e-04" ixy="1.707709e-05" ixz="1.015046e-05" iyy="1.516365e-04" iyz="-4.204869e-05" izz="1.239965e-04" />
+      <origin xyz="0.000667 0.007341 -0.001238" rpy="0 0 0" />
+      <mass value="0.450107" />
+      <inertia ixx="2.057876e-04" ixy="-1.850996e-05" ixz="3.493851e-06" iyy="1.612961e-04" iyz="1.482791e-05" izz="1.591517e-04" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -167,7 +167,7 @@
     <inertial>
       <origin xyz="0.000054 0.000055 0.000013" rpy="0 0 0" />
       <mass value="0.000190" />
-      <inertia ixx="0.000000e+00" ixy="0.000000e+00" ixz="0.000000e+00" iyy="0.000000e+00" iyz="0.000000e+00" izz="0.000000e+00" />
+      <inertia ixx="5.438701e-46" ixy="0.000000e+00" ixz="0.000000e+00" iyy="5.438701e-46" iyz="0.000000e+00" izz="0.000000e+00" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -191,7 +191,7 @@
   </link>
   <link name="y_motor_pulley">
     <inertial>
-      <origin xyz="0.001036 -0.001282 -0.001038" rpy="0 0 0" />
+      <origin xyz="0.000003 -0.001282 -0.000003" rpy="0 0 0" />
       <mass value="0.016858" />
       <inertia ixx="6.486825e-07" ixy="2.174460e-09" ixz="-2.856642e-11" iyy="5.162899e-07" iyz="-2.172144e-09" izz="6.486859e-07" />
     </inertial>
@@ -204,7 +204,7 @@
   </link>
   <link name="y_idler_pulley">
     <inertial>
-      <origin xyz="-0.000003 -0.000545 0.000027" rpy="0 0 0" />
+      <origin xyz="0.000000 -0.000545 -0.000000" rpy="0 0 0" />
       <mass value="0.009384" />
       <inertia ixx="2.222479e-07" ixy="-8.161636e-13" ixz="1.278982e-13" iyy="2.388004e-07" iyz="7.612327e-13" izz="2.222383e-07" />
     </inertial>
@@ -217,7 +217,7 @@
   </link>
   <link name="z_pulley">
     <inertial>
-      <origin xyz="0.001436 -0.001283 -0.000300" rpy="0 0 0" />
+      <origin xyz="0.000005 -0.001283 -0.000001" rpy="0 0 0" />
       <mass value="0.016858" />
       <inertia ixx="6.487037e-07" ixy="3.008524e-09" ixz="-1.274957e-11" iyy="5.162867e-07" iyz="-6.282589e-10" izz="6.486527e-07" />
     </inertial>
@@ -231,24 +231,24 @@
   <joint name="leadscrew_l_joint" type="revolute">
     <parent link="base_link" />
     <child link="leadscrew_l" />
-    <origin xyz="0.280029 0.130761 0.021889" rpy="0 0 0" />
+    <origin xyz="0.280029 0.132136 0.058989" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
-    <limit lower="-104.750516" upper="152.402310" effort="10" velocity="1" />
+    <limit lower="-245.500102" upper="11.652724" effort="10" velocity="1" />
   </joint>
   <joint name="leadscrew_r_joint" type="revolute">
     <parent link="base_link" />
     <child link="leadscrew_r" />
-    <origin xyz="-0.279972 0.130761 0.021889" rpy="0 0 0" />
+    <origin xyz="-0.279972 0.132136 0.058989" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
-    <limit lower="-152.402310" upper="104.750516" effort="10" velocity="1" />
+    <limit lower="-11.652724" upper="245.500102" effort="10" velocity="1" />
     <mimic joint="leadscrew_l_joint" multiplier="-1.00000000" offset="0" />
   </joint>
   <joint name="y_axis_assembly_joint" type="prismatic">
     <parent link="base_link" />
     <child link="y_axis_assembly" />
-    <origin xyz="-0.001701 -0.101907 0.050888" rpy="0 0 0" />
+    <origin xyz="-0.001701 0.078676 0.087988" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
-    <limit lower="-0.133372" upper="0.194045" effort="10" velocity="1" />
+    <limit lower="-0.312580" upper="0.014837" effort="10" velocity="1" />
     <mimic joint="leadscrew_l_joint" multiplier="0.00127324" offset="0" />
   </joint>
   <joint name="toolhead_carriage_joint" type="prismatic">
@@ -256,19 +256,19 @@
     <child link="toolhead_carriage" />
     <origin xyz="-0.038347 0.009671 0.085878" rpy="0 0 0" />
     <axis xyz="1.000000 0.000000 0.000000" />
-    <limit lower="-0.098916" upper="0.179013" effort="10" velocity="1" />
+    <limit lower="-0.099316" upper="0.179013" effort="10" velocity="1" />
   </joint>
   <joint name="z1_joint" type="prismatic">
     <parent link="toolhead_carriage" />
     <child link="z1_mount" />
-    <origin xyz="-0.035792 0.041989 -0.093359" rpy="0 0 0" />
+    <origin xyz="-0.035595 0.044164 -0.083878" rpy="0 0 0" />
     <axis xyz="0.000000 0.000000 1.000000" />
     <limit lower="0.000000" upper="0.066770" effort="10" velocity="1" />
   </joint>
   <joint name="z2_joint" type="prismatic">
     <parent link="toolhead_carriage" />
     <child link="z2_nozzle" />
-    <origin xyz="0.036108 0.041989 -0.026589" rpy="0 0 0" />
+    <origin xyz="0.036306 0.044164 -0.017100" rpy="0 0 0" />
     <axis xyz="0.000000 0.000000 1.000000" />
     <limit lower="-0.066770" upper="-0.000000" effort="10" velocity="1" />
     <mimic joint="z1_joint" multiplier="-1.00000000" offset="0" />
@@ -276,7 +276,7 @@
   <joint name="feeder_servo_joint" type="revolute">
     <parent link="base_link" />
     <child link="feeder_servo_arm" />
-    <origin xyz="-0.106840 0.281006 0.062843" rpy="0 0 0" />
+    <origin xyz="0.003160 0.282381 0.099943" rpy="0 0 0" />
     <axis xyz="0.000000 0.000000 1.000000" />
     <limit lower="-1.570796" upper="1.570796" effort="10" velocity="1" />
   </joint>
@@ -296,55 +296,55 @@
   <joint name="feeder_advancer_joint" type="prismatic">
     <parent link="base_link" />
     <child link="feeder_advancer" />
-    <origin xyz="-0.106509 0.249204 0.063082" rpy="0 0 0" />
+    <origin xyz="0.003491 0.250579 0.100182" rpy="0 0 0" />
     <axis xyz="-0.000000 -1.000000 -0.000000" />
     <limit lower="-0.007939" upper="0.000000" effort="10" velocity="1" />
   </joint>
   <joint name="feeder_tape_joint" type="prismatic">
     <parent link="base_link" />
     <child link="feeder_tape" />
-    <origin xyz="-0.104796 0.199994 0.056025" rpy="0 0 0" />
+    <origin xyz="0.005204 0.201369 0.093125" rpy="0 0 0" />
     <axis xyz="-0.000000 -1.000000 -0.000000" />
     <limit lower="0.000000" upper="0.004000" effort="10" velocity="1" />
   </joint>
   <joint name="feeder_spool_drive_joint" type="continuous">
     <parent link="base_link" />
     <child link="feeder_spool_drive" />
-    <origin xyz="-0.108181 0.355641 0.068818" rpy="0 0 0" />
+    <origin xyz="0.001819 0.357016 0.105918" rpy="0 0 0" />
     <axis xyz="1.000000 0.000000 0.000000" />
   </joint>
   <joint name="feeder_spool_joint" type="continuous">
     <parent link="base_link" />
     <child link="feeder_spool" />
-    <origin xyz="-0.108003 0.344973 0.072047" rpy="0 0 0" />
+    <origin xyz="0.001997 0.346348 0.109147" rpy="0 0 0" />
     <axis xyz="1.000000 0.000000 0.000000" />
     <mimic joint="feeder_spool_drive_joint" multiplier="-1.00000000" offset="0" />
   </joint>
   <joint name="feeder_tension_lever_joint" type="revolute">
     <parent link="base_link" />
     <child link="feeder_tension_lever" />
-    <origin xyz="-0.106743 0.294151 0.072650" rpy="0 0 0" />
+    <origin xyz="0.003257 0.295526 0.109750" rpy="0 0 0" />
     <axis xyz="-1.000000 -0.000000 -0.000000" />
     <limit lower="-0.200000" upper="0.050000" effort="10" velocity="1" />
   </joint>
   <joint name="z_pulley_joint" type="continuous">
     <parent link="toolhead_carriage" />
     <child link="z_pulley" />
-    <origin xyz="-0.001181 0.034793 0.035533" rpy="0 0 0" />
+    <origin xyz="0.000053 0.038779 0.044722" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
     <mimic joint="z1_joint" multiplier="157.07963268" offset="0" />
   </joint>
   <joint name="y_motor_pulley_joint" type="continuous">
     <parent link="y_axis_assembly" />
     <child link="y_motor_pulley" />
-    <origin xyz="-0.266794 -0.017173 0.077759" rpy="0 0 0" />
+    <origin xyz="-0.265761 -0.017173 0.076723" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
     <mimic joint="toolhead_carriage_joint" multiplier="157.07963268" offset="0" />
   </joint>
   <joint name="y_idler_pulley_joint" type="continuous">
     <parent link="y_axis_assembly" />
     <child link="y_idler_pulley" />
-    <origin xyz="0.289204 -0.015086 0.076735" rpy="0 0 0" />
+    <origin xyz="0.289201 -0.015086 0.076762" rpy="0 0 0" />
     <axis xyz="0.000000 1.000000 0.000000" />
     <mimic joint="toolhead_carriage_joint" multiplier="157.07963268" offset="0" />
   </joint>

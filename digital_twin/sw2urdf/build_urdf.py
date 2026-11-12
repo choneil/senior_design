@@ -6,6 +6,7 @@ the assembly structure and the measured rail / lead-screw geometry.
 """
 import os, re, sys, json, math
 import numpy as np, trimesh
+from PIL import Image
 sys.path.insert(0, os.path.dirname(__file__))
 from scene import instances, long_axis
 from limits import sweep
@@ -24,7 +25,8 @@ def under(i, prefix): return '/'.join(i['path']).startswith(prefix)
 # face). Lift the whole Toolhead Carriage subassembly until the plate's underside sits on the block tops.
 _blocks = [i for i in I if under(i, 'Y-Axis-2/Linear Rail-1/HGH15CA')]
 _bt = np.vstack([b['tri'].reshape(-1, 3) for b in _blocks]); BLOCK_TOP = _bt[:, 2].max()
-_base = next(i for i in I if '/'.join(i['path']) == 'Toolhead Carriage-1/Base-1')['tri']
+# the carriage plate: Base-1 (printed) in older Pack and Gos, base.step-1 (imported sheet metal) in the current one
+_base = next(i for i in I if under(i, 'Toolhead Carriage-1/') and re.fullmatch(r'(?i)base(\.step)?-1', i['path'][-1]))['tri']
 _n = np.cross(_base[:, 1] - _base[:, 0], _base[:, 2] - _base[:, 0])
 _down = _n[:, 2] < -0.99 * np.linalg.norm(_n, axis=1)            # downward-facing plate faces
 _c = _base.mean(1)
@@ -37,6 +39,39 @@ CARRIAGE_LIFT = BLOCK_TOP - _c[_down & _over, 2].min() if (_down & _over).any() 
 for i in I:
     if under(i, 'Toolhead Carriage-1/'): i['tri'] = i['tri'] + np.array([0, 0, CARRIAGE_LIFT])
 print(f'toolhead carriage lifted {CARRIAGE_LIFT*1000:.2f} mm to sit on the Y-rail blocks')
+
+# ---- parts the Pack and Go is missing (owner's description) ------------------
+# The machine stands on four 150 mm 4040 feet, one under each end of the two foundation 4040s, pushed against the
+# corner brackets (220 mm between the feet of a pair), with two 600 mm 2040 rails bolted under the foundation 4040s
+# in that gap, parallel to the lead screws. Built from the Pack and Go's own extrusion meshes. Assumed (not given):
+# the rails stand on edge, 40 mm tall like the feet, against the feet's inner ends.
+FOOT_L, RAIL_L = 0.150, 0.600       # (the Pack and Go's "2040 Extrusion 600mm" is modelled 590 mm long)
+def _box(t): P = t.reshape(-1, 3); return P.min(0), P.max(0)
+_found = [i for i in I if under(i, 'Foundation Frame-1/4040 Extrusion 600mm')]
+_brk = [_box(i['tri']) for i in I if under(i, 'Foundation Frame-1/') and 'Corner Bracket' in i['path'][-1]]
+_added, _gap = [], None
+for e in _found:
+    lo, hi = _box(e['tri']); k = int(np.argmax(hi - lo)); mid = (lo[k] + hi[k]) / 2
+    ends = [b for b in _brk if b[0][1 - k] < hi[1 - k] and b[1][1 - k] > lo[1 - k]]      # brackets at this beam's ends
+    a = max(b[1][k] for b in ends if b[1][k] < mid); z = min(b[0][k] for b in ends if b[0][k] > mid)
+    _gap = (a + FOOT_L, z - FOOT_L)
+    for x0 in (a, z - FOOT_L):
+        P = e['tri'].reshape(-1, 3).copy()
+        P[:, k] = x0 + (P[:, k] - lo[k]) * FOOT_L / (hi[k] - lo[k])   # cut to length: the profile is uniform along it
+        P[:, 2] -= hi[2] - lo[2]                                       # directly under the beam
+        _added.append(('4040 Extrusion 150mm', '4040 Extrusion 150mm.SLDPRT', P))
+_src = next(i for i in I if under(i, 'Foundation Frame-1/X-Axis-1/2040 Extrusion 600mm'))['tri'].reshape(-1, 3)
+_c = (_src.min(0) + _src.max(0)) / 2
+_R = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])                     # quarter turn about its length: on edge
+_Q = (_src - _c) @ _R.T; _Q[:, 1] *= RAIL_L / np.ptp(_Q[:, 1]); _Q -= _Q.min(0)
+_ztop = min(_box(e['tri'])[0][2] for e in _found)
+for x0 in (_gap[0], _gap[1] - np.ptp(_Q[:, 0])):                      # centred front to back on the frame
+    _added.append(('2040 Extrusion 600mm', '2040 Extrusion 600mm.SLDPRT',
+                   _Q + [x0, _c[1] - RAIL_L / 2, _ztop - np.ptp(_Q[:, 2])]))
+for n, (name, file, P) in enumerate(_added, 1):
+    I.append(dict(path=('Feet and Rails (added)', f'{name}-{n}'), file=file, T=np.eye(4), tri=P.reshape(-1, 3, 3)))
+print(f'added {len(_added)} parts missing from the Pack and Go: feet {FOOT_L*1000:.0f} mm, '
+      f'{(_gap[1] - _gap[0])*1000:.0f} mm between them, rails under the foundation in that gap')
 
 # ---- link membership -------------------------------------------------------
 ROD_PARTS = ('Threaded Rod - Cosmetic Thread', 'GT2 Pulley for Threaded Rod', '5mm-8mm Flex Coupling')
@@ -60,8 +95,9 @@ def link_of(i):
     if under(i, 'Y-Axis-2/'): return 'y_axis_assembly'
     if under(i, 'Toolhead Carriage-1/'):
         if p[-1] in ('Toolhead Mount-1', 'HGH15CA - Usable-1'): return 'z1_mount'
-        if p[-1] in ('Toolhead Mount - Hollow Shaft Vacuum Stepper-2', 'HGH15CA - Usable-2',
-                     'NEMA11 Hollow Shaft with Nozzle-1'): return 'z2_nozzle'
+        # Z2: the printed vacuum-stepper mount (older Pack and Gos), or the sheet-metal slide plate and vac head mount
+        if p[-1] in ('Toolhead Mount - Hollow Shaft Vacuum Stepper-2', 'Toolhead Carriage - Sheet Metal - Z-Axis-1',
+                     'Toolhead Mount - Vac Head-1', 'HGH15CA - Usable-2', 'NEMA11 Hollow Shaft with Nozzle-1'): return 'z2_nozzle'
         if p[-1] == 'GT2 Pulley for Threaded Rod-1': return 'z_pulley'   # Z belt pulley (same size as Y's)
         return 'toolhead_carriage'
     return 'base_link'
@@ -197,9 +233,90 @@ _z1, _z2 = [tuple(v for v, _ in LIMIT_FROM[k]) for k in ('Z1', 'Z2')]
 z1_lim = (max(_z1[0], -_z2[1], z1_lim[0], -z2_lim[1]), min(_z1[1], -_z2[0], z1_lim[1], -z2_lim[0]))
 z2_lim = (-z1_lim[1], -z1_lim[0])
 
+# ---- printed bed and board clamps (not in the Pack and Go) -------------------
+# Meshes rebuilt by gcode_mesh.py from the owner's print file (EN3_Printed Clamps and Bed.gcode), in print
+# coordinates (mm). The bed was printed upside down: corner stop (z 0-5), 200 x 220 mm plate with bolt holes and two
+# clamp slots (z 5-10), ribs (z 10-23). In use it is flipped onto the rails: the plate's 20 mm long edges rest on the
+# two rails, bolt holes over their slots, and the 180 mm rib block drops between them (220 - 2 x 20). The clamps
+# lie on the plate, bolted through the slots, flat edge toward the corner stop. Assumed (not given): where the bed
+# sits along the rails (centred on the nozzle's reach), which way round (corner stop toward +X and +Y of the base
+# frame), and the clamps' positions in their slots (mid-slot).
+PRINTED = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'printed')
+BOARD_TOP = None                                           # textured top face of the test board, if any
+if os.path.exists(os.path.join(PRINTED, 'Printed Bed.stl')):
+    _bed = trimesh.load(os.path.join(PRINTED, 'Printed Bed.stl')).triangles      # print coordinates, mm
+    _clamp = trimesh.load(os.path.join(PRINTED, 'Printed Clamp.stl')).triangles
+    CLAMP_HOLE = np.array([12.17, 117.65])                     # clamp bolt hole centre (print coordinates)
+    CLAMP_FLAT = _clamp[:, :, 0].max() - CLAMP_HOLE[0]         # hole centre to the clamp's flat (pushing) edge
+    SLOT_X, SLOT_Y = 177.95, 171.55                            # slot along print X (at this y), slot along print Y (at this x)
+    STOP = np.array([206.5, 202.9])                            # corner stop's inner corner (print X/Y)
+    PLATE_TOP = 5.0                                            # print Z of the plate face that is on top in use
+    # (hole position, quarter turns); mid-slot unless a test board is on the bed (below)
+    CLAMPS = [((111.55, SLOT_X), 0), ((SLOT_Y, 105.45), 1)]
+    PLATE_C = np.array([131.5, 117.9, 10.0])                   # plate centre in print X/Y, its in-use underside in Z
+    FLIP = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])        # 180 deg about (1,1,0): print Y across the rails, up -> down
+    _noz = pts('NEMA11 Hollow Shaft with Nozzle'); _nc = (_noz.min(0) + _noz.max(0)) / 2
+    BED_AT = np.array([(_gap[0] + _gap[1]) / 2,                                  # centred between the rails
+                       (_nc + ax_x * (gantry_lim[0] + gantry_lim[1]) / 2)[1],     # centred on the nozzle's X reach
+                       _ztop])                                                    # plate on the rail tops
+    def _place(p): return ((p.reshape(-1, 3) - PLATE_C) @ FLIP.T / 1000 + BED_AT).reshape(p.shape)   # print mm -> world m
+    def _clamp_at(c, turns):
+        a = turns * math.pi / 2; R = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
+        t = _clamp.reshape(-1, 3).copy(); t[:, :2] = (t[:, :2] - CLAMP_HOLE) @ R.T + c   # same Z as the corner stop
+        return t.reshape(-1, 3, 3)
+    # Test board (kicad_board.py renders its top side): face up on the plate, its origin corner (KiCad place origin,
+    # bottom left) in the corner stop, the clamps slid along their slots onto its two far edges.
+    BOARD = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'board', 'pnp_test_board')
+    if os.path.exists(BOARD + '.json'):
+        bm = json.load(open(BOARD + '.json')); bw, bh, bt = bm['width'], bm['height'], bm['thickness']
+        # KiCad x runs from the stop along -print Y, KiCad up (-y) along -print X; the board's top faces print -Z
+        lo = np.array([STOP[0] - bh, STOP[1] - bw, PLATE_TOP - bt]); hi = np.array([*STOP, PLATE_TOP])
+        box = trimesh.creation.box(bounds=[lo, hi])
+        I.append(dict(path=('Printed Bed (added)', 'PnP Test Board-1'), file='PnP Test Board.SLDPRT', T=np.eye(4),
+                      tri=_place(box.triangles), link='base_link'))
+        top = np.array([[STOP[0] - bh, STOP[1], lo[2]], [STOP[0] - bh, STOP[1] - bw, lo[2]],   # KiCad TL, TR,
+                        [STOP[0], STOP[1] - bw, lo[2]], [STOP[0], STOP[1], lo[2]]])            # BR, BL
+        V = _place(top[[0, 1, 2, 0, 2, 3]]).reshape(-1, 3) + [0, 0, 2e-5]                      # just above the box
+        if np.cross(V[1] - V[0], V[2] - V[0])[2] < 0: V = V[[0, 2, 1, 3, 5, 4]]
+        uv = {tuple(np.round(p, 9)): q for p, q in zip(_place(top).reshape(-1, 3) + [0, 0, 2e-5],
+                                                       [(0, 1), (1, 1), (1, 0), (0, 0)])}
+        BOARD_TOP = trimesh.Trimesh(vertices=V, faces=np.arange(6).reshape(2, 3), process=False,
+                                    visual=trimesh.visual.TextureVisuals(
+                                        uv=np.array([uv[tuple(np.round(p, 9))] for p in V]), image=Image.open(BOARD + '.png')))
+        o = bm['origin']                                      # KiCad place origin -> print X/Y -> world
+        BOARD_ORIGIN = _place(np.array([STOP[0] - (bh - o[1]), STOP[1] - o[0], lo[2]]))
+        hole_a, hole_b = STOP[0] - bh - CLAMP_FLAT, STOP[1] - bw - CLAMP_FLAT
+        if not (48.9 + 2.75 <= hole_a <= 174.2 - 2.75 and 40.3 + 2.75 <= hole_b <= 170.6 - 2.75):
+            print('warning: the test board is too big or small for the clamp slots; clamps left mid-slot')
+        else:
+            CLAMPS = [((hole_a, SLOT_X), 0), ((SLOT_Y, hole_b), 1)]
+        print(f'test board {bw:.0f} x {bh:.0f} x {bt} mm in the corner stop; its place origin is at '
+              f'{np.round(BOARD_ORIGIN * 1000, 2)} mm (world), top face at {(V[:, 2].max()) * 1000:.2f} mm')
+    I.append(dict(path=('Printed Bed (added)', 'Printed Bed-1'), file='Printed Bed.SLDPRT', T=np.eye(4),
+                  tri=_place(_bed), link='base_link'))
+    for n, (c, turns) in enumerate(CLAMPS, 1):
+        I.append(dict(path=('Printed Bed (added)', f'Printed Clamp-{n}'), file='Printed Clamp.SLDPRT', T=np.eye(4),
+                      tri=_place(_clamp_at(c, turns)), link='base_link'))
+    _plate_top = _ztop + 0.005
+    print(f'printed bed on the rails at {np.round(BED_AT * 1000, 1)} mm (world); the nozzle tip reaches the plate '
+          f'after {(_noz[:, 2].min() - _plate_top) * 1000:.1f} mm of Z2 travel (Z2 range {-z2_lim[0] * 1000:.1f} mm)')
+
 # belt pulleys turn about their motor shafts; centres from the pulley meshes
 ax_motor = axis_snap(np.ptp(pts('Toolhead Carriage-1/NEMA 17 w Connector'), 0))   # shaft sticks out: longest extent
-pulley_c = {k: np.vstack([i['tri'].reshape(-1, 3) for i in I if i['link'] == k]).mean(0)
+def bore_centre(v, axis):
+    """Point on a pulley's rotation axis: least-squares circle through its bore, in the plane normal to `axis`.
+    (The vertex mean is pulled ~1.5 mm off-axis by the set-screw hub, so the pulley would wobble about the shaft.)"""
+    a = np.asarray(axis, float) / np.linalg.norm(axis)
+    u = np.cross(a, [1, 0, 0] if abs(a[0]) < 0.9 else [0, 1, 0]); u /= np.linalg.norm(u)
+    w = np.cross(a, u)
+    c0 = (v.min(0) + v.max(0)) / 2
+    p = np.c_[(v - c0) @ u, (v - c0) @ w]
+    q = p[np.linalg.norm(p, axis=1) < 0.4 * np.linalg.norm(p, axis=1).max()]      # bore wall (5 mm on a 16 mm pulley)
+    sol = np.linalg.lstsq(np.c_[2 * q, np.ones(len(q))], (q ** 2).sum(1), rcond=None)[0]
+    return c0 + sol[0] * u + sol[1] * w + (((v - c0) @ a).mean()) * a
+
+
+pulley_c = {k: bore_centre(np.vstack([i['tri'].reshape(-1, 3) for i in I if i['link'] == k]), ax_motor)
             for k in ('y_motor_pulley', 'y_idler_pulley', 'z_pulley')}
 
 # link frames (world positions, axes world-aligned)
@@ -220,18 +337,28 @@ PARENT = {'leadscrew_l': 'base_link', 'leadscrew_r': 'base_link', 'y_axis_assemb
           'y_motor_pulley': 'y_axis_assembly', 'y_idler_pulley': 'y_axis_assembly', 'z_pulley': 'toolhead_carriage'}
 
 # ---- materials / density (rough: display meshes, no SolidWorks material data) ----
+def feeder(i): return i['path'][0].startswith('assembly_feeder')
+SHEET = ('sheet metal', 'z-axis mount', 'vac head', 'toolhead carriage - base')   # sheet-metal toolhead parts
 def look(i):
     n = i['path'][-1].lower()
+    if 'printed clamp' in n: return (0.49, 0.34, 0.76, 1), 1240 * 0.4      # board clamps: own colour
+    if 'test board' in n: return (0.12, 0.35, 0.19, 1), 1850                 # FR4 under green solder mask
+    if any(k in n for k in SHEET) or (under(i, 'Toolhead Carriage-1/') and n.startswith('base.step')):
+        return (0.70, 0.73, 0.77, 1), 2700                       # assumed aluminium sheet
     if any(k in n for k in ('extrusion', 'hgr15', 'bracket')): return (0.75, 0.77, 0.80, 1), 2700
     if any(k in n for k in ('hgh15', 'threaded rod -', 'screw', 'nut', 'bearing', 'spacer', 'coupling-', 'pulley')): return (0.55, 0.57, 0.60, 1), 7850
     if 'nema' in n: return (0.18, 0.18, 0.20, 1), 3500
     if 'brass' in n: return (0.80, 0.62, 0.25, 1), 8500
     if 'endstop-' in n or 'switch' in n: return (0.85, 0.15, 0.15, 1), 1200
-    if i['file'].lower().endswith('.step.sldprt'): return (0.35, 0.55, 0.85, 1), 1240 * 0.4   # imported feeder STEP parts
+    if feeder(i): return (0.35, 0.55, 0.85, 1), 1240 * 0.4      # imported feeder STEP parts
     return (0.95, 0.55, 0.15, 1), 1240 * 0.4                        # printed parts, ~40% infill
 
 # ---- part types (one entry per source part file; the viewer recolors by type) ----
-def part_type(i): return re.sub(r'(?i)(\.step)?\.sldprt$', '', i['file'])
+def part_type(i):
+    n = re.sub(r'(?i)(\.step)?\.sldprt$', '', i['file'])
+    # imported STEP bodies are all named after their STEP file ("base"): outside the feeder, qualify by subassembly
+    if i['file'].lower().endswith('.step.sldprt') and not feeder(i): n = f"{i['path'][0].rsplit('-', 1)[0]} - {n}"
+    return n
 TYPES = sorted({part_type(i) for i in I})
 for i in I: i['type'] = TYPES.index(part_type(i))
 
@@ -258,6 +385,9 @@ for name, items in links.items():
     for m, c, Ic in parts:        # parallel-axis to link COM
         d = c - com; Iacc += Ic + m * (np.dot(d, d) * np.eye(3) - np.outer(d, d))
     inertial[name] = (m_tot, com, Iacc)
+    if name == 'base_link' and BOARD_TOP is not None:      # board artwork; not a "pt_" node, so the viewer keeps its texture
+        tm = BOARD_TOP.copy(); tm.apply_translation(-o)
+        scene.add_geometry(tm, geom_name='PnP Test Board/top', node_name='board_top')
     scene.export(os.path.join(OUT, 'meshes', f'{name}.glb'))
     print(f'{name:18} {len(items):3} parts  {sum(len(i["tri"]) for i in items):7} tris  mass {m_tot:.3f} kg')
 # viewer color groups, checked in order; first keyword match wins
@@ -269,6 +399,9 @@ GROUPS = [
     ('Linear sliding hardware',  '#6a7a8c', ('hgr15', 'hgh15')),
     ('Bolts, nuts & OTS hardware', '#8c9199', ('screw', 'nut', 'spacer', 'corner bracket', 'flex coupling',
                                              'threaded rod bearing', 'endstop-', 'micro switch')),
+    ('Sheet metal',              '#a9b3bf', SHEET),
+    ('Board clamps',             '#7e57c2', ('printed clamp',)),
+    ('Test board',               '#1e5a30', ('test board',)),
 ]
 first = {}
 for i in I: first.setdefault(i['type'], i)
@@ -277,7 +410,7 @@ def group(k):
     if n == 'endstop': n = 'endstop-'          # the switch itself, not "Endstop Mount"
     for g, col, keys in GROUPS:
         if any(key in n for key in keys): return g, col
-    if first[k]['file'].lower().endswith('.step.sldprt'): return 'Feeder', '#598cd9'
+    if feeder(first[k]): return 'Feeder', '#598cd9'
     return 'Printed / custom parts', '#f28c26'
 json.dump([{'name': t, 'group': group(k)[0], 'color': group(k)[1], 'count': sum(i['type'] == k for i in I)}
            for k, t in enumerate(TYPES)], open(os.path.join(OUT, 'part_types.json'), 'w'), indent=1)
