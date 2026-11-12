@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAMBo Board Viewer</title>
+<style>
+  :root { --bg:#1a1a1e; --panel:rgba(25,25,30,0.94); --fg:#ddd; --muted:#999; --line:#333;
+          --accent:#7fc97f; --machine:#f0a040; --sel:#ffd84a; }
+  html, body { margin:0; height:100%; }
+  body { font-family: system-ui, sans-serif; background:var(--bg); color:var(--fg); overflow:hidden; }
+  #panel { position:fixed; top:0; left:0; width:300px; max-width:calc(100vw - 32px); height:100vh;
+           overflow-y:auto; background:var(--panel); padding:12px; box-sizing:border-box; z-index:10;
+           font-size:12px; }
+  #panel h3 { margin:2px 0 4px; font-size:14px; }
+  #panel .sub { color:var(--muted); font-size:11px; margin-bottom:8px; }
+  #panel a { color:#8ab4f8; }
+  #search { width:100%; box-sizing:border-box; font-size:12px; background:#111; color:var(--fg);
+            border:1px solid #444; padding:4px; margin:4px 0 8px; }
+  .grp { margin-bottom:6px; }
+  .grp > div:first-child { color:var(--muted); font-size:11px; margin:6px 0 2px; text-transform:uppercase;
+                           letter-spacing:.04em; }
+  .item { padding:2px 4px; border-radius:3px; cursor:pointer; display:flex; gap:6px; }
+  .item:hover { background:#2a2a32; }
+  .item.on { background:#3a3420; }
+  .item .r { color:var(--muted); min-width:34px; }
+  .item.m .l { color:var(--machine); }
+  #info { border:1px solid var(--line); border-radius:4px; margin-bottom:8px; padding:8px; background:#202026; }
+  #info h4 { margin:0 0 4px; font-size:13px; }
+  #info .k { color:var(--muted); }
+  #info .machine { color:var(--machine); margin:4px 0; }
+  #info table { border-collapse:collapse; width:100%; margin-top:6px; font-size:11px; }
+  #info td, #info th { border-bottom:1px solid #2a2a2a; padding:2px 3px; text-align:left; vertical-align:top; }
+  #info th { color:var(--muted); font-weight:normal; }
+  #info .inside { margin:6px 0; padding:6px; border:1px solid #3a4a60; border-radius:4px; background:#1b2330; }
+  #info .inside div { margin-top:4px; }
+  #info .inside button { padding:3px 10px; background:#2b3a52; color:#fff; border:1px solid #4a6080; border-radius:4px;
+                         cursor:pointer; font-size:12px; }
+  #toolbar { position:fixed; top:6px; right:6px; z-index:40; display:flex; gap:4px; flex-wrap:wrap;
+             justify-content:flex-end; max-width:calc(100vw - 12px); }
+  #toolbar button, #toolbar label { margin:0; padding:3px 8px; background:var(--panel); color:var(--fg);
+             border:1px solid #444; border-radius:4px; cursor:pointer; font-size:11px; }
+  #tip { position:fixed; pointer-events:none; z-index:30; background:var(--panel); border:1px solid #444;
+         padding:3px 6px; border-radius:3px; font-size:11px; display:none; white-space:nowrap; }
+  #labels { position:fixed; inset:0; pointer-events:none; z-index:5; overflow:hidden; }
+  .lbl { position:absolute; transform:translate(-50%,-100%); font-size:10px; padding:1px 4px; border-radius:3px;
+         background:rgba(0,0,0,.65); color:#eee; white-space:nowrap; }
+  .lbl.m { background:rgba(120,70,0,.85); color:#fff; }
+  #status { color:var(--muted); font-size:11px; }
+  @media (max-width: 600px) { #panel { width:100%; max-width:100%; height:45vh; top:auto; bottom:0; } }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="panelBtn">Hide panel</button>
+  <button id="flipBtn">Flip board</button>
+  <button id="resetBtn">Reset view</button>
+  <label><input id="partsChk" type="checkbox" checked> Parts</label>
+  <label><input id="lblChk" type="checkbox" checked> Labels</label>
+</div>
+<div id="panel">
+  <h3>RAMBo v1.2 board</h3>
+  <div class="sub">Controller of the pick &amp; place. <a href="../URDF/index.html">Machine viewer</a></div>
+  <div id="status">loading...</div>
+  <input id="search" type="search" placeholder="Search ref, value, net, pin..." autocomplete="off">
+  <div id="info" style="display:none"></div>
+  <div id="list"></div>
+  <div class="sub" style="margin-top:12px" id="credit"></div>
+</div>
+<div id="labels"></div>
+<div id="tip"></div>
+
+<script type="importmap">
+{ "imports": { "three": "../URDF/libs/three.module.js", "three/examples/jsm/": "../URDF/libs/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { buildCutaway } from './cutaway.js';
+
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v === '1'; } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, v ? '1' : '0'); } catch {} } };
+
+// ---------------------------------------------------------------- scene
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1e);
+const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 1, 5000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x404050, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(60, 160, 90); scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.8); fill.position.set(-80, -120, -60); scene.add(fill);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------------------------------------------------------------- materials
+const mats = new Map();
+function mat(color, opts = {}) {
+  const key = color + JSON.stringify(opts);
+  if (!mats.has(key)) mats.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0, ...opts }));
+  return mats.get(key);
+}
+const METAL = () => mat('#d8d8d8', { metalness: 0.9, roughness: 0.3 });
+const GOLD = () => mat('#d9b55a', { metalness: 0.9, roughness: 0.3 });
+const DARK = () => mat('#0c0c0c');
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const CYL = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+
+// a box in package-local mm: centre (x, y), size w x d, from z0 up to z0 + h
+function box(g, x, y, w, d, h, m, z0 = 0) {
+  const o = new THREE.Mesh(BOX, m); o.scale.set(w, h, d); o.position.set(x, z0 + h / 2, -y); g.add(o); return o;
+}
+function cyl(g, x, y, dia, h, m, z0 = 0) {
+  const o = new THREE.Mesh(CYL, m); o.scale.set(dia, h, dia); o.position.set(x, z0 + h / 2, -y); g.add(o); return o;
+}
+function pins(g, list, top, base = -3) {
+  for (const [x, y] of list) box(g, x, y, 0.64, 0.64, top - base, GOLD(), base);
+}
+
+const LED_COL = { RED: '#ff3030', GREEN: '#30ff60', YELLOW: '#ffd020' };
+
+function buildBody(p) {
+  const b = p.body, g = new THREE.Group();
+  switch (b.kind) {
+    case 'chip': {
+      const along = b.axis === 'y', L = along ? b.d : b.w, cap = Math.min(0.3 * L, 0.5);
+      box(g, b.cx, b.cy, b.w, b.d, b.h, mat(b.color));
+      for (const s of [-1, 1]) {
+        const off = s * (L / 2 - cap / 2);
+        box(g, b.cx + (along ? 0 : off), b.cy + (along ? off : 0), along ? b.w * 1.01 : cap, along ? cap : b.d * 1.01,
+            b.h * 1.01, METAL());
+      }
+      break;
+    }
+    case 'led': {
+      const c = LED_COL[(p.value || '').toUpperCase()] || '#ffffff';
+      box(g, b.cx, b.cy, b.w, b.d, b.h * 0.4, mat('#eeeeee'));
+      box(g, b.cx, b.cy, b.w * 0.8, b.d * 0.8, b.h * 0.6, mat(c, { emissive: c, emissiveIntensity: 0.35,
+          transparent: true, opacity: 0.85 }), b.h * 0.4);
+      break;
+    }
+    case 'box': {
+      box(g, b.cx, b.cy, b.w, b.d, b.h, mat(b.color, b.color === '#c9c9c9' || b.color === '#c8c8c8'
+          ? { metalness: 0.8, roughness: 0.35 } : {})).userData.mold = true;          // hidden by the package cutaway
+      for (const [x, y, w, d] of b.leads || []) box(g, x, y, w, d, 0.25, METAL());
+      if (b.tab) box(g, b.tab[0], b.tab[1], b.tab[2], b.tab[3], 0.25, METAL());
+      if (b.fuse) {                                   // ATO blade fuse lying flat in the holder clips
+        box(g, b.cx, b.cy, 19.1, 11, 3.8, mat(b.fuse, { transparent: true, opacity: 0.92, roughness: 0.3 }), b.h);
+        for (const s of [-1, 1]) box(g, b.cx + s * 6.7, b.cy, 4.5, 8.5, 1.2, METAL(), b.h - 0.6);
+      }
+      if (b.window) box(g, b.cx, b.cy, b.w * 0.4, b.d * 0.35, 0.05, mat(b.window), b.h);
+      if (b.marking) {                                // printed marking on the top face
+        const [txt, size, z] = b.marking, c = document.createElement('canvas');
+        c.width = 256; c.height = 128;
+        const x = c.getContext('2d'); x.fillStyle = b.fuse ? '#e8eefc' : '#d0d0d0';
+        x.font = 'bold 96px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 128, 68);
+        const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(size, size / 2),
+                                  new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
+        pl.rotation.x = -Math.PI / 2;
+        const hold = new THREE.Group(); hold.position.set(b.cx, z + 0.02, -b.cy);
+        hold.rotation.y = -THREE.MathUtils.degToRad(p.rot);            // keep the text upright on the board
+        hold.add(pl); g.add(hold);
+      }
+      if (b.plunger) { const [x, y, w, d, z, h] = b.plunger; box(g, x, y, w, d, h, mat('#111111'), z); }
+      break;
+    }
+    case 'cyl': {
+      cyl(g, b.cx, b.cy, b.d, b.h, mat(b.color, { roughness: 0.4 }));
+      cyl(g, b.cx, b.cy, b.d * 0.92, 0.3, METAL(), b.h);
+      box(g, b.cx - b.d * 0.36, b.cy, b.d * 0.1, b.d * 0.35, b.h * 1.002, mat('#bbbbbb'));   // polarity stripe
+      break;
+    }
+    case 'melf': {
+      const o = new THREE.Mesh(CYL, mat(b.color, { transparent: true, opacity: 0.9 }));
+      o.scale.set(b.d, b.len, b.d); o.rotation.z = Math.PI / 2; o.position.set(b.cx, b.d / 2, -b.cy); g.add(o);
+      break;
+    }
+    case 'header': {
+      box(g, b.cx, b.cy, b.w, b.d, b.h, mat(b.color));
+      pins(g, b.pins, b.pin_h);
+      break;
+    }
+    case 'molex': {                                   // shrouded header: floor, four walls, latch slot in the -y wall
+      const m = mat(b.color), t = b.wall, x0 = b.cx - b.w / 2, y0 = b.cy - b.d / 2;
+      box(g, b.cx, b.cy, b.w, b.d, 1.2, m);
+      box(g, x0 + t / 2, b.cy, t, b.d, b.h, m);
+      box(g, x0 + b.w - t / 2, b.cy, t, b.d, b.h, m);
+      box(g, b.cx, y0 + b.d - t / 2, b.w, t, b.h, m);
+      const half = (b.w - b.slot) / 2;
+      for (const s of [-1, 1]) box(g, b.cx + s * (b.slot / 2 + half / 2), y0 + t / 2, half, t, b.h, m);
+      box(g, b.cx, y0 + t / 2, b.slot, t, b.h * 0.35, m);
+      pins(g, b.pins, b.pin_h);
+      break;
+    }
+    case 'terminal': {                                // Molex Eurostyle 5.08 mm header, no plug fitted
+      const m = mat(b.color), xs = b.pins.map(q => q[0]).sort((a, c) => a - c), H = b.h;
+      // x spans between the pins over [u0, u1], leaving a gap centred on each pin (notched rims, legs between windows)
+      const spans = (u0, u1, gap) =>
+        xs.map((x, i) => [i ? xs[i - 1] + gap / 2 : u0, x - gap / 2]).concat([[xs.at(-1) + gap / 2, u1]]);
+      // walk the cavity edge from right to left: one arc per pin, its ends (cusps) at x +- half on the line v,
+      // bulging `sag` towards -v
+      const pockets = (path, v, sag, half) => {
+        const R = (half * half + sag * sag) / (2 * sag), c = v - sag + R, a = Math.atan2(v - c, half);
+        for (const x of [...xs].reverse()) { path.lineTo(x + half, v); path.absarc(x, c, R, a, Math.PI - a, true); }
+      };
+      const extrude = (shape, depth) => new THREE.Mesh(
+        new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 16 }), m);
+      // The housing is the same for both (Molex drawings SD-39531-002 vertical, SD-39532-002 right angle); build it
+      // standing up: pin row on y = 0, mouth at the top. -y is the side with the pin windows and the arched inner
+      // wall, +y the wall with a notch over each pin.
+      const hg = new THREE.Group();
+      const x0 = xs[0] - 3.5, x1 = xs.at(-1) + 3.5, cx = (x0 + x1) / 2, L = x1 - x0;
+      const yN = -3.84, yF = 3.95, yLip = 4.55, yFi = 3.08;   // outer faces, lip on the +y face, +y inner face
+      const floor = 3.1, te = 0.78, win = 2.5, winY = -1.1;   // cavity floor, end walls, pin windows
+      box(hg, cx, (0.6 + yF) / 2, L, yF - 0.6, win, m);                                        // base behind the windows
+      for (const [a, c] of spans(x0, x1, 2.3)) box(hg, (a + c) / 2, (yN + winY) / 2, c - a, winY - yN, win, m);
+      for (const [a, c] of spans(x0, x1, 1.3)) box(hg, (a + c) / 2, (winY + 0.6) / 2, c - a, 0.6 - winY, win, m);  // narrower to the pin
+      box(hg, cx, (yN + yF) / 2, L, yF - yN, floor - win, m, win);                             // cavity floor
+      // -y wall and end walls as one U: arched inner face, arcs meeting in cusps midway between the pins
+      const u = new THREE.Shape(); u.moveTo(x0, yFi); u.lineTo(x0, yN); u.lineTo(x1, yN); u.lineTo(x1, yFi);
+      u.lineTo(x1 - te, yFi); u.lineTo(x1 - te, -2.19); pockets(u, -2.19, 0.89, 2.54); u.lineTo(x0 + te, -2.19);
+      u.lineTo(x0 + te, yFi); u.closePath();
+      const wall = extrude(u, H - floor); wall.rotation.x = -Math.PI / 2; wall.position.y = floor; hg.add(wall);
+      box(hg, cx, (yFi + yF) / 2, L, yF - yFi, H - 1.3 - floor, m, floor);                     // +y wall
+      box(hg, cx, (yF + yLip) / 2, L, yLip - yF, H - 1.3 - 9.15, m, 9.15);                     // lip on its outer face
+      for (const [a, c] of spans(x0, x1, 1.5)) box(hg, (a + c) / 2, (yFi + yLip) / 2, c - a, yLip - yFi, 1.3, m, H - 1.3);
+      for (const x of xs) cyl(hg, x, 0, 2.84, 4.6 - floor, m, floor);                          // boss round each pin
+      for (const x of xs) box(hg, x, 0, 0.55, 0.55, 0.55, GOLD(), 10.4);                       // chamfered pin tips
+      if (b.entry === 'top') {                        // 39531 vertical: as built, pins 3.3 mm through the board
+        for (const x of xs) box(hg, x, 0, 1.0, 1.0, 10.4 + 3.3, GOLD(), -3.3);
+        g.add(hg);
+      } else {                                        // 39532 right angle: the housing on its back, mouth towards -y
+        // pin row 3.84 mm above the board (drawing: 3.8); the pins bend down 2.0 mm inside the back face, onto
+        // the pads, and end 3.9 mm below the board
+        const yp = b.pins[0][1], yB = yp + 2.0;
+        for (const x of xs) box(hg, x, 0, 1.0, 1.0, 10.4 - 2.0 + 0.5, GOLD(), 2.0 - 0.5);
+        hg.rotation.x = Math.PI / 2; hg.position.set(0, -yN, -yB); g.add(hg);                  // h -> -y, +y side up
+        for (const x of xs) box(g, x, yp, 1.0, 1.0, -yN + 0.5 + 3.9, GOLD(), -3.9);
+      }
+      break;
+    }
+  }
+  return g;
+}
+
+// ---------------------------------------------------------------- board
+const board = new THREE.Group(); scene.add(board);
+const partsGroup = new THREE.Group(); board.add(partsGroup);
+let data, W, H, T;
+const byRef = new Map();
+let selected = null, selBox = null;
+const labelEls = [];
+
+const res = await fetch('board.json');
+data = await res.json();
+// IC internals for the package cutaway, keyed by part value (see cutaway.js)
+const internals = await fetch('internals.json').then(r => (r.ok ? r.json() : {})).catch(() => ({}));
+W = data.width; H = data.height; T = data.thickness;
+const loader = new THREE.TextureLoader();
+const texTop = loader.load('top.png'), texBot = loader.load('bottom.png');
+for (const t of [texTop, texBot]) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
+
+const top = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshStandardMaterial({ map: texTop, roughness: 0.6 }));
+top.rotation.x = -Math.PI / 2; top.position.set(W / 2, 0.03, -H / 2); board.add(top);
+const bot = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshStandardMaterial({ map: texBot, roughness: 0.6 }));
+bot.rotation.x = Math.PI / 2; bot.position.set(W / 2, -T - 0.03, -H / 2); board.add(bot);
+const edge = box(board, W / 2, H / 2, W, H, T * 0.998, mat('#c9b77c'), -T);
+board.position.set(-W / 2, 0, H / 2);
+
+for (const p of data.parts) {
+  const g = p.body ? buildBody(p) : new THREE.Group();
+  g.position.set(p.x, 0, -p.y);
+  g.rotation.y = THREE.MathUtils.degToRad(p.rot);
+  if (p.mirror) { g.rotation.z = Math.PI; g.position.y = -T; }
+  g.userData.part = p;
+  g.traverse(o => { o.userData.part = p; });
+  partsGroup.add(g);
+  p.obj = g;
+  byRef.set(p.ref, p);
+}
+
+board.updateMatrixWorld(true);
+for (const p of data.parts) p.top = p.body ? new THREE.Box3().setFromObject(p.obj).max.y : 0.2;
+$('status').textContent = `${data.parts.length} parts. Click a part or a list entry for its pins and nets.`;
+$('credit').innerHTML = `Board: ${data.source}. Pin roles: Marlin pins_RAMBO.h.`;
+
+// ---------------------------------------------------------------- camera
+function resetView(flip = false) {
+  const d = 170 * Math.max(1, 1.25 / camera.aspect);
+  camera.position.set(0, flip ? -d : d, flip ? -d * 0.55 : d * 0.55);
+  controls.target.set(0, 0, 0);
+  controls.update();
+}
+let flipped = false;
+resetView();
+$('resetBtn').onclick = () => resetView(flipped);
+$('flipBtn').onclick = () => { flipped = !flipped; resetView(flipped); };
+
+// ---------------------------------------------------------------- list
+const GROUP_ORDER = ['Motors', 'Endstops', 'Thermistors', 'Heaters & fans', 'Power', 'Communication', 'Expansion',
+                     'Controls', 'ICs', 'Transistors', 'Diodes & LEDs', 'Passives', 'Other'];
+const natural = (a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true });
+
+function matches(p, q) {
+  if (!q) return true;
+  q = q.toLowerCase();
+  const hay = [p.ref, p.value, p.label, p.package, p.desc, p.mpn, p.func, p.machine,
+               ...(p.pins || []).flatMap(r => [r.net, r.pin, r.arduino != null ? 'd' + r.arduino : '', ...(r.marlin || [])])];
+  return hay.some(s => s && String(s).toLowerCase().includes(q));
+}
+
+function renderList() {
+  const q = $('search').value.trim();
+  const groups = new Map(GROUP_ORDER.map(g => [g, []]));
+  for (const p of data.parts) if (matches(p, q)) (groups.get(p.group) || groups.get('Other')).push(p);
+  const list = $('list'); list.innerHTML = '';
+  for (const [name, ps] of groups) {
+    if (!ps.length) continue;
+    const big = ['ICs', 'Transistors', 'Diodes & LEDs', 'Passives', 'Other'].includes(name);
+    const g = document.createElement('div'); g.className = 'grp';
+    const h = document.createElement('div'); h.textContent = `${name} (${ps.length})`; g.appendChild(h);
+    const box = document.createElement(big && !q ? 'details' : 'div');
+    if (big && !q) { const s = document.createElement('summary'); s.textContent = 'show'; s.style.cursor = 'pointer';
+                     s.style.color = 'var(--muted)'; s.style.fontSize = '11px'; box.appendChild(s); }
+    for (const p of ps.sort(natural)) {
+      const it = document.createElement('div');
+      it.className = 'item' + (p.machine ? ' m' : '') + (selected === p ? ' on' : '');
+      it.innerHTML = `<span class="r"></span><span class="l"></span>`;
+      it.children[0].textContent = p.ref;
+      it.children[1].textContent = (p.label || p.value || p.package) + (p.dnp ? ' (not fitted)' : '');
+      it.onclick = () => select(p, true);
+      box.appendChild(it);
+    }
+    g.appendChild(box); list.appendChild(g);
+  }
+}
+$('search').addEventListener('input', renderList);
+
+// ---------------------------------------------------------------- selection & info
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------------------------------------------------------------- package cutaway
+let opened = null;
+function openPackage(p) {
+  if (opened) closePackage();
+  const spec = internals[p.value];
+  if (!spec) return;
+  if (!p.cut) {
+    p.cut = buildCutaway(p, spec);
+    p.cut.traverse(o => { o.userData.part = p; });
+    p.obj.add(p.cut);
+  }
+  p.cut.visible = true;
+  p.obj.traverse(o => { if (o.userData.mold) o.visible = false; });
+  opened = p;
+  camera.near = 0.05; camera.updateProjectionMatrix();
+  controls.zoomToCursor = true;                        // zoom into the die block under the pointer
+  const c = new THREE.Box3().setFromObject(p.obj).getCenter(new THREE.Vector3()), s = Math.max(p.body.w, p.body.d);
+  controls.target.copy(c);
+  camera.position.set(c.x + s * 0.2, c.y + s * 1.5 + 1.5, c.z + s * 0.8 + 1);
+  controls.update();
+  if ($('openBtn')) $('openBtn').textContent = 'Close package';
+}
+function closePackage() {
+  if (!opened) return;
+  opened.cut.visible = false;
+  opened.obj.traverse(o => { if (o.userData.mold) o.visible = true; });
+  opened = null;
+  camera.near = 1; camera.updateProjectionMatrix();
+  controls.zoomToCursor = false;
+  if ($('openBtn')) $('openBtn').textContent = 'Open package';
+}
+
+function select(p, focus = false) {
+  if (opened && opened !== p) closePackage();
+  selected = p;
+  if (selBox) { scene.remove(selBox); selBox = null; }
+  if (!p) { $('info').style.display = 'none'; renderList(); return; }
+  selBox = new THREE.BoxHelper(p.obj, 0xffd84a); scene.add(selBox);
+  if (focus) {
+    const c = new THREE.Box3().setFromObject(p.obj).getCenter(new THREE.Vector3());
+    const off = camera.position.clone().sub(controls.target);
+    controls.target.copy(c); camera.position.copy(c).add(off.setLength(Math.min(off.length(), 90)));
+  }
+  const spec = !p.dnp && internals[p.value];
+  const rows = (p.pins || []).map(r => `<tr><td>${esc(r.pad)}</td><td>${esc(r.pin || '')}</td><td>${esc(r.net)}${
+      r.to ? '<br><span class="k">→ ' + esc(r.to.join(', ')) + '</span>' : ''}</td><td>${
+      r.arduino != null ? 'D' + r.arduino : ''}${r.marlin ? '<br><span class="k">' + esc(r.marlin.join(', ')) + '</span>' : ''}</td></tr>`).join('');
+  $('info').innerHTML = `
+    <h4>${esc(p.ref)}${p.label ? ' · ' + esc(p.label) : ''}</h4>
+    ${p.machine ? `<div class="machine">${esc(p.machine)}</div>` : ''}
+    ${p.func ? `<div>${esc(p.func)}</div>` : ''}
+    <div><span class="k">Value</span> ${esc(p.value)} &nbsp; <span class="k">Package</span> ${esc(p.package)}</div>
+    ${p.desc ? `<div><span class="k">Part</span> ${esc(p.desc)}</div>` : ''}
+    ${p.mpn ? `<div><span class="k">MPN</span> ${esc([p.mfr, p.mpn].filter(Boolean).join(' '))}</div>` : ''}
+    ${p.dnp ? '<div class="k">Not fitted on the shipped board (bare pads).</div>' : ''}
+    ${spec ? `<div class="inside"><button id="openBtn">${opened === p ? 'Close' : 'Open'} package</button>
+      <div><b>${esc(spec.name)}</b></div><div class="k">${esc(spec.notes)}</div>
+      <div class="k">Source: ${esc(spec.source)}</div></div>` : ''}
+    ${rows ? `<table><tr><th>Pad</th><th>Pin</th><th>Net</th><th>Arduino / Marlin</th></tr>${rows}</table>` : ''}`;
+  if (spec) $('openBtn').onclick = () => (opened === p ? closePackage() : openPackage(p));
+  $('info').style.display = '';
+  renderList();
+  const u = new URL(location); u.searchParams.set('part', p.ref); history.replaceState(null, '', u);
+}
+
+// ---------------------------------------------------------------- picking & tooltip
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+function pick(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  if (!partsGroup.visible) return null;
+  const hit = ray.intersectObjects(partsGroup.children, true)[0];
+  return hit ? hit.object.userData.part : null;
+}
+renderer.domElement.addEventListener('pointermove', ev => {
+  const p = pick(ev), tip = $('tip');
+  if (!p) { tip.style.display = 'none'; renderer.domElement.style.cursor = ''; return; }
+  tip.textContent = `${p.ref} · ${p.label || p.value || p.package}`;
+  tip.style.left = ev.clientX + 12 + 'px'; tip.style.top = ev.clientY + 12 + 'px'; tip.style.display = 'block';
+  renderer.domElement.style.cursor = 'pointer';
+});
+let down = null;
+renderer.domElement.addEventListener('pointerdown', ev => { down = [ev.clientX, ev.clientY]; });
+renderer.domElement.addEventListener('pointerup', ev => {
+  if (!down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 4) return;
+  select(pick(ev));
+});
+
+// ---------------------------------------------------------------- labels
+for (const p of data.parts) {
+  if (!p.label) continue;
+  const el = document.createElement('div');
+  el.className = 'lbl' + (p.machine ? ' m' : '');
+  el.textContent = p.label.length > 18 ? p.label.split(' / ')[0] + ' …' : p.label;
+  $('labels').appendChild(el);
+  labelEls.push([p, el]);
+}
+const v = new THREE.Vector3();
+function updateLabels() {
+  const show = $('lblChk').checked;
+  $('labels').style.display = show ? '' : 'none';
+  if (!show) return;
+  for (const [p, el] of labelEls) {
+    const bb = new THREE.Box3().setFromObject(p.obj);
+    bb.getCenter(v); v.y = flipped ? -T - 1 : (p.top || 0) + 1;
+    v.project(camera);
+    const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
+    el.style.display = vis ? '' : 'none';
+    if (vis) { el.style.left = (v.x + 1) / 2 * innerWidth + 'px'; el.style.top = (1 - v.y) / 2 * innerHeight + 'px'; }
+  }
+}
+
+// ---------------------------------------------------------------- toggles
+function toggle(id, key, apply, def = true) {
+  const el = $(id); el.checked = store.get(key, def); apply(el.checked);
+  el.addEventListener('change', () => { store.set(key, el.checked); apply(el.checked); });
+}
+toggle('partsChk', 'rambo-parts', on => { partsGroup.visible = on; if (selBox) selBox.visible = on; });
+toggle('lblChk', 'rambo-labels', () => {});
+let panelOn = store.get('rambo-panel', innerWidth > 600);
+function applyPanel() { $('panel').style.display = panelOn ? '' : 'none'; $('panelBtn').textContent = panelOn ? 'Hide panel' : 'Show panel'; }
+applyPanel();
+$('panelBtn').onclick = () => { panelOn = !panelOn; store.set('rambo-panel', panelOn); applyPanel(); };
+
+renderList();
+const want = new URL(location).searchParams.get('part');
+if (want && byRef.has(want)) select(byRef.get(want), true);
+if (want && byRef.has(want) && new URL(location).searchParams.has('open')) openPackage(byRef.get(want));
+if (new URL(location).searchParams.has('debug')) Object.assign(window, { THREE, scene, camera, controls, data, byRef, select, openPackage });
+
+renderer.setAnimationLoop(() => {
+  controls.update();
+  if (selBox) selBox.update();
+  renderer.render(scene, camera);
+  updateLabels();
+});
+</script>
+</body>
+</html>

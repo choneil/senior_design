@@ -1,0 +1,10 @@
+{
+ "width": 100.0,
+ "height": 88.0,
+ "thickness": 1.6,
+ "origin": [
+  4.0,
+  84.0
+ ],
+ "note": "mm; x right, y down from the board top-left (KiCad); origin = KiCad place/drill origin"
+}

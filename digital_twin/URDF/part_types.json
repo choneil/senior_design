@@ -3,7 +3,13 @@
   "name": "2040 Extrusion 600mm",
   "group": "Extrusions",
   "color": "#bfc4cc",
-  "count": 2
+  "count": 4
+ },
+ {
+  "name": "4040 Extrusion 150mm",
+  "group": "Extrusions",
+  "color": "#bfc4cc",
+  "count": 4
  },
  {
   "name": "4040 Extrusion 600mm",
@@ -22,12 +28,6 @@
   "group": "Bolts, nuts & OTS hardware",
   "color": "#8c9199",
   "count": 2
- },
- {
-  "name": "Base",
-  "group": "Printed / custom parts",
-  "color": "#f28c26",
-  "count": 1
  },
  {
   "name": "Brass Motion Coupling",
@@ -141,7 +141,7 @@
   "name": "MirrorCorner Bracket",
   "group": "Bolts, nuts & OTS hardware",
   "color": "#8c9199",
-  "count": 1
+  "count": 2
  },
  {
   "name": "MirrorExisting Y-Axis Slider",
@@ -216,6 +216,24 @@
   "count": 1
  },
  {
+  "name": "PnP Test Board",
+  "group": "Test board",
+  "color": "#1e5a30",
+  "count": 1
+ },
+ {
+  "name": "Printed Bed",
+  "group": "Printed / custom parts",
+  "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Printed Clamp",
+  "group": "Board clamps",
+  "color": "#7e57c2",
+  "count": 2
+ },
+ {
   "name": "Pulley Mount - Y-Axis",
   "group": "Printed / custom parts",
   "color": "#f28c26",
@@ -246,21 +264,39 @@
   "count": 2
  },
  {
+  "name": "Toolhead Carriage - Sheet Metal - Z-Axis",
+  "group": "Sheet metal",
+  "color": "#a9b3bf",
+  "count": 1
+ },
+ {
+  "name": "Toolhead Carriage - base",
+  "group": "Sheet metal",
+  "color": "#a9b3bf",
+  "count": 1
+ },
+ {
   "name": "Toolhead Mount",
   "group": "Printed / custom parts",
   "color": "#f28c26",
   "count": 1
  },
  {
-  "name": "Toolhead Mount - Hollow Shaft Vacuum Stepper",
-  "group": "Printed / custom parts",
-  "color": "#f28c26",
+  "name": "Toolhead Mount - Vac Head",
+  "group": "Sheet metal",
+  "color": "#a9b3bf",
   "count": 1
  },
  {
   "name": "Y-Axis Bracket",
   "group": "Printed / custom parts",
   "color": "#f28c26",
+  "count": 1
+ },
+ {
+  "name": "Z-Axis Mount",
+  "group": "Sheet metal",
+  "color": "#a9b3bf",
   "count": 1
  },
  {
@@ -339,13 +375,13 @@
   "name": "socket button head cap screw_am",
   "group": "Bolts, nuts & OTS hardware",
   "color": "#8c9199",
-  "count": 1
+  "count": 40
  },
  {
   "name": "socket head cap screw_am",
   "group": "Bolts, nuts & OTS hardware",
   "color": "#8c9199",
-  "count": 2
+  "count": 8
  },
  {
   "name": "spooler_mountplate_v2",
@@ -357,7 +393,7 @@
   "name": "spring",
   "group": "Feeder",
   "color": "#598cd9",
-  "count": 1
+  "count": 2
  },
  {
   "name": "spring_pull",

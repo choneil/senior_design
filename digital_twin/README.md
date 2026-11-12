@@ -3,6 +3,7 @@ Web-based digital twin using URDF and Three.js, built from the SolidWorks "Pick 
 
 - `URDF/` – the viewer (`index.html`), the model (`PickAndPlace.urdf`, `meshes/`, `part_types.json`) and the serial bridge (`serial_bridge.py`)
 - `sw2urdf/` – rebuilds the model from a SolidWorks Pack and Go, without SolidWorks (see `sw2urdf/README.md`)
+- `RAMBo/` – 3D viewer of the RAMBo v1.2 controller board with pin and net lookup (see `RAMBo/README.md`)
 
 # View
 https://choneil.github.io/senior_design/digital_twin/URDF/
@@ -14,6 +15,8 @@ cd URDF
 python -m http.server 8000
 
 open http://localhost:8000
+
+The board viewer is at http://localhost:8000/RAMBo/index.html when serving the `digital_twin` folder.
 
 # Run (with hardware)
 ## while in the digital_twin directory:
