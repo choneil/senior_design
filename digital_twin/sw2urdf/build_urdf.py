@@ -20,6 +20,17 @@ I = instances(ASM)
 def has(i, *names): return any(n in '/'.join(i['path']) for n in names)
 def under(i, prefix): return '/'.join(i['path']).startswith(prefix)
 
+# ---- CAD fix: Z-Axis Mount.SLDPRT carries a reference stepper ----------------
+# Besides the sheet-metal bracket, the part file holds a whole vertical NEMA 17 (body, connector, shaft, screws and
+# standoffs on its hole pattern) that sits inside the real Z motor. Keep only the bracket: its largest body.
+for i in I:
+    if i['path'][-1].startswith('Z-Axis Mount-'):
+        _m = trimesh.Trimesh(vertices=i['tri'].reshape(-1, 3), faces=np.arange(len(i['tri']) * 3).reshape(-1, 3), process=True)
+        _b = _m.split(only_watertight=False)
+        _keep = max(_b, key=lambda b: np.linalg.norm(b.extents))
+        print(f"{'/'.join(i['path'])}: kept the bracket, dropped {len(_b) - 1} bodies of a reference stepper")
+        i['tri'] = _keep.triangles
+
 # ---- CAD fix: the toolhead carriage rests ON the Y-rail blocks ----------------
 # In the assembly the carriage plate overlaps the HGH15 blocks (their tops end up flush with the plate's top
 # face). Lift the whole Toolhead Carriage subassembly until the plate's underside sits on the block tops.
